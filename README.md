@@ -20,6 +20,8 @@ Dễ test: logic chính tách khỏi giao diện hoặc I/O.
 Dễ phân chia nhóm: nhóm A làm UI, nhóm B làm core logic.
 
 ⚙️ Tầng phân chia:
+
+```
 ┌────────────────────────────┐
 │         Interface          │ ← adapter (TUI, file, worker)
 └────────────┬───────────────┘
@@ -35,6 +37,7 @@ Dễ phân chia nhóm: nhóm A làm UI, nhóm B làm core logic.
 ┌────────────▼───────────────┐
 │       External Layer       │ ← infrastructure (lib cụ thể: bubbletea)
 └────────────────────────────┘
+```
 
 ## Cấu trúc thư mục Clean Architecture
 
