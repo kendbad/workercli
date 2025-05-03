@@ -172,6 +172,26 @@ Gom nhóm hoặc phân trang
 Giúp tách rõ:
 UseCase → ViewModel → Component (VD: Table, StatusBar)
 
+🧠 Lưu ý về kiến trúc:
+
+```
+Layer	Vai trò	Biết được tầng nào?
+domain	Entity + Interface business logic thuần túy	KHÔNG biết gì về usecase/infra
+usecase	Logic điều phối các hành động	Chỉ biết domain và adapter
+adapter	Nhận input (CLI/HTTP/file), gửi tới usecase	Biết usecase và infra
+infra	TUI, file, logging, network,...	KHÔNG biết gì về usecase/domain
+```
+
+📌 Gợi ý: Team mới vào chỉ cần đọc các mục sau
+
+```
+README.md: Hướng dẫn tổng quan.
+cmd/workercli/main.go: Entry chính, từ đây hiểu flow tổng thể.
+internal/usecase/: Hiểu các hành vi của ứng dụng.
+internal/infrastructure/tui/: Biết đang dùng framework TUI nào.
+adapter/: Biết dữ liệu vào/ra và worker pool xử lý thế nào.
+```
+
 ## Cài đặt yêu cầu:
 
 - Go 1.21 trở lên.
