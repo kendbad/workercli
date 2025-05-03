@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"workercli/internal/adapter/proxy"
+	"workercli/internal/adapter/worker"
 	"workercli/internal/domain/model"
 	"workercli/internal/domain/service"
-	"workercli/internal/interface/proxy"
-	"workercli/internal/interface/worker"
 	"workercli/pkg/utils"
 )
 

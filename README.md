@@ -11,7 +11,165 @@ WorkerCLI là một ứng dụng CLI được viết bằng Go, tập trung vào
 - **Cấu hình linh hoạt**: Sử dụng file YAML để cấu hình worker, input/output, và logger.
 - **Clean Architecture**: Mã nguồn được thiết kế mục đích học tập, cho người mới tiếp cận Clean Architecture. Thiết kế mô-đun, dễ bảo trì và mở rộng.
 
-## Yêu cầu
+🧱 Clean Architecture là gì?
+
+Clean Architecture là một mẫu thiết kế giúp phân tách rõ ràng các tầng trong phần mềm để:
+
+Dễ mở rộng: thay giao diện, thay storage, hoặc logic mà không ảnh hưởng phần còn lại.
+Dễ test: logic chính tách khỏi giao diện hoặc I/O.
+Dễ phân chia nhóm: nhóm A làm UI, nhóm B làm core logic.
+
+⚙️ Tầng phân chia:
+┌────────────────────────────┐
+│         Interface          │ ← adapter (TUI, file, worker)
+└────────────┬───────────────┘
+             │ depends on
+┌────────────▼───────────────┐
+│          Usecase           │ ← orchestrate logic (Task xử lý như nào)
+└────────────┬───────────────┘
+             │ depends on
+┌────────────▼───────────────┐
+│           Domain           │ ← business model & service
+└────────────┬───────────────┘
+             │
+┌────────────▼───────────────┐
+│       External Layer       │ ← infrastructure (lib cụ thể: bubbletea)
+└────────────────────────────┘
+
+## Cấu trúc thư mục Clean Architecture
+
+```bash
+workercli/
+├── cmd/                # Điểm vào chính của app
+├── configs/            # File cấu hình YAML
+├── input/              # Dữ liệu đầu vào (task, proxy)
+├── output/             # Kết quả sau khi xử lý
+├── logs/               # Ghi log hệ thống
+├── pkg/                # Thư viện dùng lại
+├── adapter/           # Logic chính của app (Clean Architecture)
+│   ├── config/         # Load cấu hình từ YAML
+│   ├── domain/         # Các model, interface cốt lõi (không phụ thuộc bên ngoài)
+│   ├── usecase/        # Tầng điều phối nghiệp vụ
+│   ├── adapter/      # Kết nối giữa domain và bên ngoài (file, TUI, proxy, worker)
+│   └── infrastructure/ # Cài đặt cụ thể TUI (bubbletea, tview,...)
+└── README.md           # Tài liệu hướng dẫn
+```
+
+Dưới đây là cấu trúc thư mục chú thích chi tiết:
+```bash
+workercli/
+├── cmd/                                  # Điểm khởi chạy ứng dụng
+│   └── workercli/                        # Module chính
+│       └── main.go                       # Hàm main, khởi tạo toàn bộ hệ thống
+│
+├── configs/                              # Các tệp cấu hình YAML của hệ thống
+│   ├── input.yaml                        # Cấu hình cho dữ liệu đầu vào
+│   ├── output.yaml                       # Cấu hình xuất dữ liệu
+│   ├── worker.yaml                       # Cấu hình worker/pool
+│   ├── logger.yaml                       # Cấu hình logger
+│   └── proxy.yaml                        # Cấu hình kiểm tra proxy
+│
+├── internal/                             # Logic nội bộ của ứng dụng (theo Clean Architecture)
+│   ├── config/                           # Loader config và model cấu hình
+│   │   ├── loader.go                     # Hàm đọc và parse file YAML
+│   │   └── model.go                      # Struct ánh xạ cấu hình
+│
+│   ├── domain/                           # Business domain: định nghĩa logic cốt lõi và giao diện (interface)
+│   │   ├── model/                        # Các struct đại diện cho dữ liệu trong domain
+│   │   │   ├── task.go                   # Struct đại diện cho nhiệm vụ
+│   │   │   ├── proxy.go                  # Struct đại diện proxy
+│   │   │   ├── result.go                 # Kết quả xử lý task hoặc proxy
+│   │   │   └── config.go                 # Struct cấu hình nội bộ
+│   │   └── service/                      # Interface của các logic xử lý domain
+│   │       ├── task_service.go          # Interface xử lý task
+│   │       └── proxy_service.go         # Interface xử lý proxy
+│
+│   ├── usecase/                          # Application logic: điều phối hành vi dựa trên yêu cầu từ adapter
+│   │   ├── batch_task.go                # Use case xử lý danh sách task
+│   │   └── proxy_check.go              # Use case kiểm tra proxy
+│
+│   ├── adapter/                          # Adapter layer: xử lý giao tiếp vào/ra hệ thống
+│   │   ├── input/                        # Đọc file đầu vào (task, proxy,...)
+│   │   │   ├── file_reader.go            # Đọc file txt
+│   │   │   └── parser.go                 # Parse nội dung file
+│   │   ├── proxy/                        # Giao tiếp với logic kiểm tra proxy
+│   │   │   ├── reader.go                 # Đọc danh sách proxy
+│   │   │   └── checker.go                # Gửi request kiểm tra proxy
+│   │   ├── worker/                       # Tạo worker pool, xử lý đồng thời
+│   │   │   ├── pool.go                   # Quản lý worker pool
+│   │   │   └── worker.go                 # Một worker đơn lẻ
+│   │   └── tui/                          # Giao diện dòng lệnh TUI (terminal UI) — định nghĩa interface trừu tượng
+│   │       ├── factory.go                # Tạo renderer TUI phù hợp
+│   │       ├── renderer.go               # Interface renderer
+│   │       └── types.go                  # Kiểu dữ liệu chung cho TUI
+│
+│   ├── infrastructure/                   # Cài đặt chi tiết, dùng thư viện ngoài (UI framework, logging,...)
+│   │   └── tui/                          # Hiện thực giao diện terminal UI theo nhiều thư viện khác nhau
+│   │       ├── bubbletea/                # Cài đặt TUI bằng thư viện Bubbletea
+│   │       │   ├── renderer.go
+│   │       │   ├── proxy_renderer.go
+│   │       │   ├── viewmodel.go
+│   │       │   └── components/
+│   │       │       ├── table.go          # Bảng hiển thị task/proxy
+│   │       │       └── status.go         # Thanh trạng thái (status bar)
+│   │       ├── tview/                    # Cài đặt TUI bằng thư viện Tview
+│   │       │   ├── renderer.go
+│   │       │   ├── proxy_renderer.go
+│   │       │   ├── viewmodel.go
+│   │       │   └── components/
+│   │       │       ├── layout.go         # Layout TUI
+│   │       │       └── form.go           # Form nhập liệu
+│   │       ├── termui/                   # Cài đặt TUI bằng thư viện TermUI
+│   │       │   ├── renderer.go
+│   │       │   ├── viewmodel.go
+│   │       │   └── components/
+│   │       │       ├── table.go
+│   │       │       └── chart.go          # Biểu đồ thống kê (nếu có)
+│   │       ├── coordinator.go            # Điều phối TUI đang dùng (bubbletea, tview,...)
+│   │       ├── factory.go                # Factory chọn renderer phù hợp
+│   │       └── config.go                 # Cấu hình giao diện TUI
+│
+├── pkg/                                   # Thư viện dùng lại được (shared utility)
+│   ├── utils/
+│   │   ├── logger.go                      # Cấu hình logger chung
+│   │   └── stringutil.go                  # Hàm xử lý chuỗi tiện ích
+│   └── logger/                            # Tách riêng package logger nếu dùng phức tạp hơn
+│       └── logger.go
+│
+├── input/                                 # Dữ liệu đầu vào (cho testing hoặc thực tế)
+│   ├── tasks.txt                          # Danh sách task
+│   └── proxy.txt                          # Danh sách proxy
+│
+├── output/                                # Kết quả xuất ra
+│   ├── results.txt                        # Kết quả task
+│   └── proxy_results.txt                  # Kết quả kiểm tra proxy
+│
+├── logs/                                  # Log file ứng dụng
+│   └── app.log
+│
+├── go.mod                                 # Module Go
+├── go.sum                                 # Checksum cho dependencies
+├── README.md                              # Tài liệu giới thiệu dự án
+└── .gitignore                             # Bỏ qua file không cần track bởi git
+```
+
+🧩 Tại sao có viewmodel.go?
+
+Trong TUI, bạn không nên render trực tiếp từ domain model vì:
+
+Domain thường chứa dữ liệu "thô".
+UI cần hiển thị dữ liệu "thân thiện" hơn (icon, màu sắc, format text, phân trang).
+👉 viewmodel.go là lớp chuyển đổi từ domain.Model → ViewModel để TUI dễ xử lý và hiển thị.
+
+Trong Clean Architecture, tầng UI không nên xử lý dữ liệu thô trực tiếp từ domain.
+viewmodel.go là cầu nối giúp:
+Chuyển domain.Model → UI-friendly model (ViewModel)
+Format data (icon, màu, trạng thái text)
+Gom nhóm hoặc phân trang
+Giúp tách rõ:
+UseCase → ViewModel → Component (VD: Table, StatusBar)
+
+## Cài đặt yêu cầu:
 
 - Go 1.21 trở lên.
 - Thư viện (tự động tải qua `go mod tidy`):
@@ -106,118 +264,6 @@ WorkerCLI là một ứng dụng CLI được viết bằng Go, tập trung vào
    - Hiển thị tiến độ/kết quả trong TUI (nếu bật).
    - Ghi log hoạt động vào console hoặc file.
 
-## Cấu trúc thư mục Clean Architecture
-
-```bash
-workercli/
-├── cmd/                          # Điểm vào của ứng dụng
-│   └── workercli/
-│       └── main.go               # Điểm vào CLI
-├── internal/                     # Logic cốt lõi (Clean Architecture)
-│   ├── config/                   # Quản lý cấu hình
-│   ├── domain/                   # Mô hình và logic nghiệp vụ
-│   ├── usecase/                  # Các trường hợp sử dụng
-│   ├── interface/                # Bộ điều hợp (input, worker)
-│   └── infrastructure/           # Triển khai dịch vụ ngoài
-├── configs/                      # File cấu hình YAML
-├── pkg/                          # Công cụ dùng chung (logger, tui)
-├── input/                        # File đầu vào
-├── output/                       # File đầu ra
-├── logs/                         # File log
-├── go.mod                        # Module Go
-├── go.sum                        # Checksum phụ thuộc
-├── README.md                     # Tài liệu dự án
-└── .gitignore                    # File bỏ qua git
-```
-
-Dưới đây là cấu trúc thư mục mới sau khi tổ chức lại TUI:
-```bash
-workercli/
-├── cmd/
-│   └── workercli/
-│       └── main.go
-├── configs/
-│   ├── input.yaml
-│   ├── output.yaml
-│   ├── worker.yaml
-│   ├── logger.yaml
-│   └── proxy.yaml
-├── input/
-│   ├── tasks.txt
-│   └── proxy.txt
-├── internal/
-│   ├── config/
-│   │   ├── config.go
-│   │   └── types.go
-│   ├── domain/
-│   │   ├── model/
-│   │   │   ├── task.go
-│   │   │   ├── result.go
-│   │   │   └── proxy.go
-│   │   │   └── config.go
-│   │   ├── service/
-│   │   │   ├── task.go
-│   │   │   └── proxy.go
-├── infrastructure/
-│   └── tui/
-│       ├── types.go          # Cấu hình chung (RendererConfig, ComponentStyle)
-│       ├── bubbletea/
-│       │   ├── models/
-│       │   │   └── status.go  # TUIRow, TUIViewState cho bubbletea
-│       │   ├── renderer.go
-│       │   ├── proxy_renderer.go
-│       │   └── components/
-│       │       ├── table.go
-│       │       └── status.go
-│       ├── tview/
-│       │   ├── models/
-│       │   │   └── model.go  # TUIRow, TUIViewState cho tview
-│       │   ├── renderer.go
-│       │   ├── proxy_renderer.go
-│       │   └── components/
-│       │       ├── layout.go
-│       │       └── form.go
-│       ├── termui/           # Thư viện TUI mới
-│       │   ├── models/
-│       │   │   └── model.go
-│       │   ├── renderer.go
-│       │   └── components/
-│       │       ├── table.go
-│       │       └── chart.go
-│       ├── coordinator.go    # Điều phối renderer
-│       └── factory.go        # Triển khai RendererFactory
-│   ├── interface/
-│   │   ├── input/
-│   │   │   ├── file_reader.go
-│   │   │   └── parser.go
-│   │   ├── worker/
-│   │   │   ├── worker.go
-│   │   │   └── pool.go
-│   │   ├── proxy/
-│   │   │   ├── reader.go
-│   │   │   └── checker.go
-│   │   ├── tui/
-│   │   │   ├── factory.go
-│   │   │   ├── renderer.go         # Giao diện trừu tượng cho renderer
-│   │   │   └── types.go           # Các kiểu dữ liệu cho TUI
-│   ├── usecase/
-│   │   ├── batch_task.go
-│   │   └── proxy_check.go    
-├── logs/
-│   └── app.log
-├── output/
-│   ├── results.txt
-│   └── proxy_results.txt
-├── pkg/
-│   ├── utils/
-│   │   ├── logger.go
-│   │   └── utils.go
-├── go.mod
-├── go.sum
-├── README.md
-└── .gitignore
-```
-
 ## Mở rộng
 
 WorkerCLI được thiết kế để dễ dàng thêm các tính năng mới:
@@ -225,7 +271,7 @@ WorkerCLI được thiết kế để dễ dàng thêm các tính năng mới:
 - **Gửi HTTP request**: Thêm `RequestSender` vào `domain/service/` và triển khai trong `infrastructure/`.
 - **Kiểm tra email**: Tạo `EmailChecker` và các mô hình liên quan (như `EmailAccount`).
 
-## Ví dụ Log đầu ra
+## Ví dụ Log đầu ra khi không sử dụng TUI.
 
 ```
 INFO[2025-05-02T12:00:00+07:00] Ứng dụng WorkerCLI khởi động

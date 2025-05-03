@@ -3,10 +3,10 @@ package tui
 import (
 	"os"
 	"sync"
+	"workercli/internal/adapter/tui"
 	"workercli/internal/domain/model"
 	"workercli/internal/infrastructure/tui/bubbletea"
 	"workercli/internal/infrastructure/tui/tview"
-	"workercli/internal/interface/tui"
 	"workercli/pkg/utils"
 
 	"golang.org/x/term"

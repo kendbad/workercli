@@ -2,10 +2,10 @@ package usecase
 
 import (
 	"fmt"
+	"workercli/internal/adapter/input"
+	"workercli/internal/adapter/worker"
 	"workercli/internal/domain/model"
 	"workercli/internal/domain/service"
-	"workercli/internal/interface/input"
-	"workercli/internal/interface/worker"
 	"workercli/pkg/utils"
 
 	"github.com/sirupsen/logrus"
