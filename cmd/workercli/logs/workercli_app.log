@@ -1,0 +1,42 @@
+[36mINFO[0m[2025-05-04T00:28:01+07:00] Starting TUI                                 
+[36mINFO[0m[2025-05-04T00:28:01+07:00] Đọc được 7 proxy từ /Users/thienphuc/Cursor/workercli/input/proxy.txt 
+[36mINFO[0m[2025-05-04T00:28:01+07:00] Khởi động pool với 1 worker                  
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Proxy http://localhost:30001 failed: error when dialing 127.0.0.1:30001: dial tcp4 127.0.0.1:30001: connect: connection refused 
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Lỗi kiểm tra proxy http://localhost:30001: error when dialing 127.0.0.1:30001: dial tcp4 127.0.0.1:30001: connect: connection refused 
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Worker 1 lỗi xử lý task : error when dialing 127.0.0.1:30001: dial tcp4 127.0.0.1:30001: connect: connection refused 
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Proxy socks5://localhost:30002 failed: error when dialing 127.0.0.1:30002: dial tcp4 127.0.0.1:30002: connect: connection refused 
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Lỗi kiểm tra proxy socks5://localhost:30002: error when dialing 127.0.0.1:30002: dial tcp4 127.0.0.1:30002: connect: connection refused 
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Worker 1 lỗi xử lý task : error when dialing 127.0.0.1:30002: dial tcp4 127.0.0.1:30002: connect: connection refused 
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Proxy socks5://localhost:30003 failed: error when dialing 127.0.0.1:30003: dial tcp4 127.0.0.1:30003: connect: connection refused 
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Lỗi kiểm tra proxy socks5://localhost:30003: error when dialing 127.0.0.1:30003: dial tcp4 127.0.0.1:30003: connect: connection refused 
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Worker 1 lỗi xử lý task : error when dialing 127.0.0.1:30003: dial tcp4 127.0.0.1:30003: connect: connection refused 
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Proxy socks5://localhost:30004 failed: error when dialing 127.0.0.1:30004: dial tcp4 127.0.0.1:30004: connect: connection refused 
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Lỗi kiểm tra proxy socks5://localhost:30004: error when dialing 127.0.0.1:30004: dial tcp4 127.0.0.1:30004: connect: connection refused 
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Worker 1 lỗi xử lý task : error when dialing 127.0.0.1:30004: dial tcp4 127.0.0.1:30004: connect: connection refused 
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Proxy socks5://localhost:30005 failed: error when dialing 127.0.0.1:30005: dial tcp4 127.0.0.1:30005: connect: connection refused 
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Lỗi kiểm tra proxy socks5://localhost:30005: error when dialing 127.0.0.1:30005: dial tcp4 127.0.0.1:30005: connect: connection refused 
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Worker 1 lỗi xử lý task : error when dialing 127.0.0.1:30005: dial tcp4 127.0.0.1:30005: connect: connection refused 
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Proxy socks5://localhost:30006 failed: error when dialing 127.0.0.1:30006: dial tcp4 127.0.0.1:30006: connect: connection refused 
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Lỗi kiểm tra proxy socks5://localhost:30006: error when dialing 127.0.0.1:30006: dial tcp4 127.0.0.1:30006: connect: connection refused 
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Worker 1 lỗi xử lý task : error when dialing 127.0.0.1:30006: dial tcp4 127.0.0.1:30006: connect: connection refused 
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Proxy socks5://localhost:30000 failed: error when dialing 127.0.0.1:30000: dial tcp4 127.0.0.1:30000: connect: connection refused 
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Lỗi kiểm tra proxy socks5://localhost:30000: error when dialing 127.0.0.1:30000: dial tcp4 127.0.0.1:30000: connect: connection refused 
+[31mERRO[0m[2025-05-04T00:28:01+07:00] Worker 1 lỗi xử lý task : error when dialing 127.0.0.1:30000: dial tcp4 127.0.0.1:30000: connect: connection refused 
+[36mINFO[0m[2025-05-04T00:28:01+07:00] Dừng pool worker                             
+[36mINFO[0m[2025-05-04T00:28:01+07:00] Đã lưu kết quả vào /Users/thienphuc/Cursor/workercli/output/proxy_results.txt 
+[36mINFO[0m[2025-05-04T00:28:01+07:00] Sending proxy result to TUI: {{http localhost 30001}  failed } 
+[36mINFO[0m[2025-05-04T00:28:01+07:00] Added proxy result to channel: {{http localhost 30001}  failed } 
+[36mINFO[0m[2025-05-04T00:28:01+07:00] Sending proxy result to TUI: {{socks5 localhost 30000}  failed } 
+[36mINFO[0m[2025-05-04T00:28:01+07:00] Added proxy result to channel: {{socks5 localhost 30000}  failed } 
+[36mINFO[0m[2025-05-04T00:28:01+07:00] Sending proxy result to TUI: {{socks5 localhost 30005}  failed } 
+[36mINFO[0m[2025-05-04T00:28:01+07:00] Added proxy result to channel: {{socks5 localhost 30005}  failed } 
+[36mINFO[0m[2025-05-04T00:28:01+07:00] Sending proxy result to TUI: {{socks5 localhost 30006}  failed } 
+[36mINFO[0m[2025-05-04T00:28:01+07:00] Added proxy result to channel: {{socks5 localhost 30006}  failed } 
+[36mINFO[0m[2025-05-04T00:28:01+07:00] Sending proxy result to TUI: {{socks5 localhost 30002}  failed } 
+[36mINFO[0m[2025-05-04T00:28:01+07:00] Added proxy result to channel: {{socks5 localhost 30002}  failed } 
+[36mINFO[0m[2025-05-04T00:28:01+07:00] Sending proxy result to TUI: {{socks5 localhost 30003}  failed } 
+[36mINFO[0m[2025-05-04T00:28:01+07:00] Added proxy result to channel: {{socks5 localhost 30003}  failed } 
+[36mINFO[0m[2025-05-04T00:28:01+07:00] Sending proxy result to TUI: {{socks5 localhost 30004}  failed } 
+[36mINFO[0m[2025-05-04T00:28:01+07:00] Added proxy result to channel: {{socks5 localhost 30004}  failed } 
+[36mINFO[0m[2025-05-04T00:28:37+07:00] Closing TUI                                  
+[36mINFO[0m[2025-05-04T00:28:37+07:00] Hoàn thành kiểm tra proxy! Số proxy: 7       

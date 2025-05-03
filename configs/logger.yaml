@@ -1,0 +1,4 @@
+level: info
+output: console
+file_path: logs/app.log
+format: text

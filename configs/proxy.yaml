@@ -1,0 +1,2 @@
+file_path: input/proxy.txt
+check_url: https://api.ipify.org?format=json
