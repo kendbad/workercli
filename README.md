@@ -156,6 +156,117 @@ workercli/
 └── .gitignore                             # Bỏ qua file không cần track bởi git
 ```
 
+<!-- thêm nhiều mã giống cách TUI phân bổ 2 layer -->
+<!-- httpclient, ipchecker, emailchecker -->
+```bash
+workercli/
+├── cmd/
+│   └── workercli/
+│       ├── main.go                       // Hàm main, khởi tạo hệ thống
+│       └── workercli_temp/              // Thư mục tạm thời (có thể xóa)
+│           └── main.go                  // Bản sao main.go
+├── configs/
+│   ├── input.yaml                       // Cấu hình dữ liệu đầu vào
+│   ├── output.yaml                      // Cấu hình xuất dữ liệu
+│   ├── worker.yaml                      // Cấu hình worker/pool
+│   ├── logger.yaml                      // Cấu hình logger
+│   └── proxy.yaml                       // Cấu hình kiểm tra proxy
+├── internal/
+│   ├── config/
+│   │   ├── loader.go                    // Đọc và parse file YAML
+│   │   └── model.go                     // Struct ánh xạ cấu hình
+│   ├── domain/
+│   │   ├── model/
+│   │   │   ├── task.go                  // Struct Task
+│   │   │   ├── proxy.go                 // Struct Proxy và ParseProxy
+│   │   │   ├── result.go                // Struct Result
+│   │   │   └── config.go                // Struct cấu hình nội bộ
+│   │   └── service/
+│   │       ├── task_service.go          // Interface xử lý task
+│   │       └── proxy_service.go         // Interface xử lý proxy
+│   ├── usecase/
+│   │   ├── batch_task.go                // Use case xử lý danh sách task
+│   │   ├── proxy_check.go               // Use case kiểm tra proxy
+│   │   └── email_check.go               // Use case kiểm tra email
+│   ├── adapter/
+│   │   ├── input/
+│   │   │   ├── file_reader.go           // Đọc file txt
+│   │   │   └── parser.go                // Parse nội dung file
+│   │   ├── proxy/
+│   │   │   ├── reader.go                // Interface và logic đọc proxy
+│   │   │   └── checker.go               // Interface và logic kiểm tra proxy
+│   │   ├── httpclient/
+│   │   │   └── http_client.go           // Interface HTTPClient
+│   │   ├── ipchecker/
+│   │   │   └── ip_checker.go            // Interface IPChecker
+│   │   ├── emailchecker/
+│   │   │   └── email_checker.go         // Interface EmailChecker
+│   │   ├── worker/
+│   │   │   ├── pool.go                  // Quản lý worker pool
+│   │   │   └── worker.go                // Một worker đơn lẻ
+│   │   └── tui/
+│   │       ├── factory.go               // Tạo renderer TUI
+│   │       ├── renderer.go              // Interface renderer
+│   │       ├── types.go                 // Kiểu dữ liệu chung cho TUI
+│   │       ├── coordinator.go           // Điều phối TUI
+│   │       ├── tui_factory.go           // Factory chọn renderer
+│   │       └── config.go                // Cấu hình TUI
+│   ├── infrastructure/
+│   │   ├── task/
+│   │   │   └── processor.go             // Xử lý task
+│   │   ├── httpclient/
+│   │   │   ├── fasthttp_client.go       // Triển khai fasthttp
+│   │   │   └── nethttp_client.go        // Triển khai net/http
+│   │   ├── proxy/
+│   │   │   ├── file_reader.go           // Triển khai đọc proxy từ file
+│   │   │   └── ip_checker.go            // Triển khai kiểm tra proxy qua ipchecker
+│   │   ├── ipchecker/
+│   │   │   └── api_checker.go           // Triển khai kiểm tra IP qua API
+│   │   ├── emailchecker/
+│   │   │   └── api_checker.go           // Triển khai kiểm tra email qua API
+│   │   └── tui/
+│   │       ├── bubbletea/
+│   │       │   ├── renderer.go          // Triển khai Bubbletea
+│   │       │   ├── proxy_renderer.go    // Renderer cho proxy
+│   │       │   ├── viewmodel.go         // View model
+│   │       │   └── components/
+│   │       │       ├── table.go         // Bảng hiển thị
+│   │       │       └── status.go        // Thanh trạng thái
+│   │       ├── tview/
+│   │       │   ├── renderer.go          // Triển khai Tview
+│   │       │   ├── proxy_renderer.go    // Renderer cho proxy
+│   │       │   ├── viewmodel.go         // View model
+│   │       │   └── components/
+│   │       │       ├── layout.go        // Layout TUI
+│   │       │       └── form.go          // Form nhập liệu
+│   │       ├── termui/
+│   │       │   ├── renderer.go          // Triển khai TermUI
+│   │       │   ├── viewmodel.go         // View model
+│   │       │   └── components/
+│   │       │       ├── table.go         // Bảng hiển thị
+│   │       │       └── chart.go         // Biểu đồ thống kê
+│   └── pkg/
+│       ├── utils/
+│       │   ├── logger.go                // Cấu hình logger
+│       │   └── stringutil.go            // Xử lý chuỗi
+│       └── logger/
+│           └── logger.go                // Package logger
+├── input/
+│   ├── tasks.txt                        // Danh sách task
+│   ├── proxy.txt                        // Danh sách proxy
+│   └── emails.txt                       // Danh sách email
+├── output/
+│   ├── results.txt                      // Kết quả task
+│   ├── proxy_results.txt                // Kết quả kiểm tra proxy
+│   └── email_results.txt                // Kết quả kiểm tra email
+├── logs/
+│   └── app.log                          // Log ứng dụng
+├── go.mod                               // Module Go
+├── go.sum                               // Checksum dependencies
+├── README.md                            // Tài liệu dự án
+└── .gitignore                           // File bỏ qua git
+```
+
 🧩 Tại sao có viewmodel.go?
 
 Trong TUI, bạn không nên render trực tiếp từ domain model vì:

@@ -8,17 +8,19 @@ import (
 	proxyiface "workercli/internal/adapter/proxy"
 	"workercli/internal/config"
 	"workercli/internal/domain/model"
-	"workercli/internal/infrastructure/proxy"
 	"workercli/internal/infrastructure/task"
 	"workercli/internal/infrastructure/tui"
+	"workercli/internal/proxy"
 	"workercli/internal/usecase"
 	"workercli/pkg/utils"
 )
 
 func main() {
-	tuiMode := flag.String("tui", "tview", "Loại giao diện TUI: tview, bubbletea")
+	tuiMode := flag.String("tui", "tview", "Loại giao diện TUI: tview, bubbletea, termui")
 	checkProxy := flag.Bool("proxy", true, "Kiểm tra proxy từ proxy.txt")
-	checkTask := flag.Bool("task", true, "Kiểm tra task từ tasks.txt")
+	checkTask := flag.Bool("task", false, "Kiểm tra task từ tasks.txt")
+	checkEmail := flag.Bool("email", false, "Kiểm tra email từ emails.txt")
+	clientType := flag.String("client", "fasthttp", "Thư viện gửi request: fasthttp, nethttp")
 	flag.Parse()
 
 	cfg, err := config.Load("configs/")
@@ -41,13 +43,11 @@ func main() {
 
 	if *checkProxy {
 		proxyReader := proxyiface.NewProxyReader(logger)
-		proxyChecker := proxy.NewChecker(logger)
-		proxyUsecase := usecase.NewProxyCheckUseCase(proxyReader, proxyChecker, cfg.Proxy.CheckURL, cfg.Worker.Workers, logger)
+		proxyChecker := proxy.NewChecker(logger, *clientType)
+		proxyUsecase := usecase.NewProxyCheckUseCase(proxyReader, proxyChecker, cfg.Proxy.CheckURL, cfg.Worker.Workers, logger, *clientType)
 
 		if *tuiMode != "" {
-
 			logger.SetOutput(logFile)
-
 			factory := tui.NewRendererFactory(logger, *tuiMode)
 			renderer := factory.CreateProxyRenderer(logger, &[]model.ProxyResult{}, &sync.Mutex{}, make(chan model.ProxyResult, 100), make(chan struct{}))
 			tuiUsecase := tui.NewTUIUseCase(logger, *tuiMode, renderer)
@@ -93,9 +93,7 @@ func main() {
 		if *tuiMode != "" {
 			logger.SetOutput(logFile)
 			factory := tui.NewRendererFactory(logger, *tuiMode)
-
 			renderer := factory.CreateTaskRenderer(logger, &[]model.Result{}, &sync.Mutex{}, make(chan model.Result, 100), make(chan struct{}))
-
 			tuiUsecase := tui.NewTUIUseCase(logger, *tuiMode, renderer)
 
 			if err := tuiUsecase.Start(); err != nil {
@@ -126,7 +124,9 @@ func main() {
 			}
 			logger.Infof("Hoàn thành xử lý tasks! Số task: %d", len(results))
 		}
+	} else if *checkEmail {
+
 	} else {
-		logger.Info("Không có tùy chọn nào được chọn (-proxy hoặc -task)")
+		logger.Info("Không có tùy chọn nào được chọn (-proxy, -task, hoặc -email)")
 	}
 }

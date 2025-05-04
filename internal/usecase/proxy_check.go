@@ -3,33 +3,23 @@ package usecase
 import (
 	"fmt"
 	"os"
-	"strings"
-	"workercli/internal/adapter/proxy"  // Gói xử lý đọc danh sách proxy
-	"workercli/internal/adapter/worker" // Gói quản lý pool worker xử lý tác vụ
-	"workercli/internal/domain/model"   // Gói định nghĩa các struct dữ liệu
-	"workercli/internal/domain/service" // Gói cung cấp dịch vụ kiểm tra proxy
-	"workercli/pkg/utils"               // Gói tiện ích (logger, auto path,...)
+	proxy1 "workercli/internal/adapter/proxy"
+	"workercli/internal/adapter/worker"
+	"workercli/internal/domain/model"
+	"workercli/internal/proxy"
+	"workercli/pkg/utils"
 )
 
-// ProxyCheckUseCase là struct chính chịu trách nhiệm thực hiện kiểm tra proxy
 type ProxyCheckUseCase struct {
-	reader     proxy.Reader         // Đối tượng đọc danh sách proxy từ file
-	checker    service.ProxyChecker // Dịch vụ kiểm tra proxy
-	checkURL   string               // URL dùng để kiểm tra proxy
-	workerPool *worker.Pool         // Pool worker xử lý tác vụ song song
-	logger     *utils.Logger        // Logger ghi log hoạt động
+	reader     proxy1.Reader
+	checker    *proxy.Checker
+	checkURL   string
+	workerPool *worker.Pool
+	logger     *utils.Logger
 }
 
-// NewProxyCheckUseCase khởi tạo một ProxyCheckUseCase mới
-// - reader: Đối tượng đọc proxy
-// - checker: Dịch vụ kiểm tra proxy
-// - checkURL: URL kiểm tra
-// - workers: Số lượng worker trong pool
-// - logger: Đối tượng logger
-func NewProxyCheckUseCase(reader proxy.Reader, checker service.ProxyChecker, checkURL string, workers int, logger *utils.Logger) *ProxyCheckUseCase {
-	// Tạo processor để xử lý tác vụ kiểm tra proxy
+func NewProxyCheckUseCase(reader proxy1.Reader, checker *proxy.Checker, checkURL string, workers int, logger *utils.Logger, clientType string) *ProxyCheckUseCase {
 	processor := &ProxyTaskProcessor{checker, checkURL, logger}
-	// Tạo worker pool với số lượng worker và processor
 	return &ProxyCheckUseCase{
 		reader:     reader,
 		checker:    checker,
@@ -39,98 +29,69 @@ func NewProxyCheckUseCase(reader proxy.Reader, checker service.ProxyChecker, che
 	}
 }
 
-// ProxyTaskProcessor xử lý các tác vụ kiểm tra proxy
 type ProxyTaskProcessor struct {
-	checker  service.ProxyChecker // Dịch vụ kiểm tra proxy
-	checkURL string               // URL dùng để kiểm tra
-	logger   *utils.Logger        // Logger ghi log
+	checker  *proxy.Checker
+	checkURL string
+	logger   *utils.Logger
 }
 
-// ProcessTask xử lý một tác vụ kiểm tra proxy
-// - task: Tác vụ chứa thông tin proxy (TaskID dạng "protocol://ip:port")
-// Trả về kết quả kiểm tra hoặc lỗi nếu có
 func (p *ProxyTaskProcessor) ProcessTask(task model.Task) (model.Result, error) {
-	// Tách TaskID thành protocol và địa chỉ (ip:port)
-	parts := strings.SplitN(task.TaskID, "://", 2)
-	if len(parts) != 2 {
-		err := fmt.Errorf("invalid proxy format: %s", task.TaskID)
+	proxy, err := proxy.ParseProxy(task.TaskID)
+	if err != nil {
 		p.logger.Errorf("Invalid proxy format: %s", task.TaskID)
 		return model.Result{TaskID: task.TaskID, Status: "Failed", Error: err.Error()}, err
 	}
 
-	// Tách địa chỉ thành IP và Port
-	addrParts := strings.Split(parts[1], ":")
-	if len(addrParts) != 2 {
-		err := fmt.Errorf("invalid proxy address: %s", parts[1])
-		p.logger.Errorf("Invalid proxy address: %s", parts[1])
-		return model.Result{TaskID: task.TaskID, Status: "Failed", Error: err.Error()}, err
-	}
-
-	// Tạo struct proxy từ thông tin đã tách
-	proxy := model.Proxy{Protocol: parts[0], IP: addrParts[0], Port: addrParts[1]}
-	// Kiểm tra proxy bằng checker
-	result, err := p.checker.CheckProxy(proxy, p.checkURL)
+	ip, status, err := p.checker.CheckProxy(proxy, p.checkURL)
 	if err != nil {
 		p.logger.Errorf("Proxy check failed %s: %v", task.TaskID, err)
-		return model.Result{TaskID: task.TaskID, Status: "Failed", Error: err.Error()}, err
+		return model.Result{TaskID: task.TaskID, Status: status, Error: err.Error()}, err
 	}
 
-	// Ghi log thành công và trả về kết quả
-	p.logger.Infof("Proxy %s returned IP: %s", task.TaskID, result.IP)
-	return model.Result{TaskID: task.TaskID, Status: "Success"}, nil
+	p.logger.Infof("Proxy %s returned IP: %s", task.TaskID, ip)
+	return model.Result{TaskID: task.TaskID, Status: status}, nil
 }
 
-// Execute thực hiện quá trình kiểm tra danh sách proxy từ file
-// - proxyFile: Đường dẫn file chứa danh sách proxy
-// Trả về danh sách kết quả và lỗi nếu có
 func (uc *ProxyCheckUseCase) Execute(proxyFile string) ([]model.ProxyResult, error) {
-	// Đọc danh sách proxy từ file
 	proxies, err := uc.reader.ReadProxies(proxyFile)
 	if err != nil {
 		uc.logger.Errorf("Failed to read proxies: %v", err)
 		return nil, err
 	}
 
-	// Khởi động worker pool
 	uc.workerPool.Start()
 	results := make([]model.ProxyResult, 0, len(proxies))
-	proxyResultCh := make(chan model.ProxyResult, len(proxies)) // Kênh nhận kết quả
+	proxyResultCh := make(chan model.ProxyResult, len(proxies))
 
-	// Gửi từng proxy vào worker pool để xử lý
-	for _, proxy := range proxies {
+	for _, p := range proxies {
 		task := model.Task{
-			TaskID: fmt.Sprintf("%s://%s:%s", proxy.Protocol, proxy.IP, proxy.Port),
-			Data:   proxy.Protocol,
+			TaskID: fmt.Sprintf("%s://%s:%s", p.Protocol, p.IP, p.Port),
+			Data:   p.Protocol,
 		}
 		uc.workerPool.Submit(task)
 
-		// Goroutine thu thập kết quả từ worker pool
-		go func(p model.Proxy) {
-			taskResult := <-uc.workerPool.Results() // Nhận kết quả từ pool
-			result := model.ProxyResult{Proxy: p, Status: taskResult.Status, Error: taskResult.Error}
+		go func(pr model.Proxy) {
+			taskResult := <-uc.workerPool.Results()
+			result := model.ProxyResult{Proxy: pr, Status: taskResult.Status, Error: taskResult.Error}
 			if taskResult.Status == "Success" {
-				// Kiểm tra lại proxy để lấy IP
-				if pr, err := uc.checker.CheckProxy(p, uc.checkURL); err == nil {
-					result.IP = pr.IP
+				if ip, _, err := uc.checker.CheckProxy(pr, uc.checkURL); err == nil {
+					result.IP = ip
 				} else {
 					result.IP = "Failed Get IP"
 				}
 			} else {
 				result.IP = "Failed Send Task"
 			}
-			proxyResultCh <- result // Gửi kết quả vào kênh
-		}(proxy)
+			proxyResultCh <- result
+		}(p)
 	}
 
-	// Thu thập tất cả kết quả từ kênh
 	for i := 0; i < len(proxies); i++ {
 		results = append(results, <-proxyResultCh)
 	}
 
-	// Dừng worker pool
 	uc.workerPool.Stop()
 
-	// Lưu kết quả vào file
 	outputFile := utils.AutoPath("output/proxy_results.txt")
 	file, err := os.Create(outputFile)
 	if err != nil {
@@ -139,7 +100,6 @@ func (uc *ProxyCheckUseCase) Execute(proxyFile string) ([]model.ProxyResult, err
 	}
 	defer file.Close()
 
-	// Ghi từng kết quả vào file
 	for _, r := range results {
 		status := r.Status
 		if r.Error != "" {
@@ -149,7 +109,6 @@ func (uc *ProxyCheckUseCase) Execute(proxyFile string) ([]model.ProxyResult, err
 			r.Proxy.Protocol, r.Proxy.IP, r.Proxy.Port, r.IP, status)
 	}
 
-	// Ghi log lưu file thành công
 	uc.logger.Infof("Results saved to %s", outputFile)
 	return results, nil
 }
