@@ -1,62 +1,34 @@
 package proxy
 
 import (
-	"bufio"
-	"os"
-	"strings"
 	"workercli/internal/domain/model"
 	"workercli/pkg/utils"
 )
 
+// Reader defines the interface for reading proxies.
 type Reader interface {
-	ReadProxies(filePath string) ([]model.Proxy, error)
+	ReadProxies(source string) ([]model.Proxy, error)
 }
 
+// ProxyReader is the adapter for reading proxies.
 type ProxyReader struct {
 	logger *utils.Logger
+	reader Reader // Specific implementation (e.g., file reader)
 }
 
-func NewProxyReader(logger *utils.Logger) *ProxyReader {
-	return &ProxyReader{logger: logger}
+func NewProxyReader(logger *utils.Logger, reader Reader) *ProxyReader {
+	return &ProxyReader{
+		logger: logger,
+		reader: reader,
+	}
 }
 
-func (r *ProxyReader) ReadProxies(filePath string) ([]model.Proxy, error) {
-	filePath = utils.AutoPath(filePath)
-	file, err := os.Open(filePath)
+func (r *ProxyReader) ReadProxies(source string) ([]model.Proxy, error) {
+	proxies, err := r.reader.ReadProxies(source)
 	if err != nil {
-		r.logger.Errorf("Không thể mở file proxy: %v", err)
+		r.logger.Errorf("Failed to read proxies from %s: %v", source, err)
 		return nil, err
 	}
-	defer file.Close()
-
-	var proxies []model.Proxy
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
-		}
-		parts := strings.Split(line, "://")
-		if len(parts) != 2 {
-			r.logger.Warnf("Proxy không hợp lệ: %s", line)
-			continue
-		}
-		protocol := parts[0]
-		addrParts := strings.Split(parts[1], ":")
-		if len(addrParts) != 2 {
-			r.logger.Warnf("Proxy không hợp lệ: %s", line)
-			continue
-		}
-		proxies = append(proxies, model.Proxy{
-			Protocol: protocol,
-			IP:       addrParts[0],
-			Port:     addrParts[1],
-		})
-	}
-	if err := scanner.Err(); err != nil {
-		r.logger.Errorf("Lỗi đọc file proxy: %v", err)
-		return nil, err
-	}
-	r.logger.Infof("Đọc được %d proxy từ %s", len(proxies), filePath)
+	r.logger.Infof("Read %d proxies from %s", len(proxies), source)
 	return proxies, nil
 }

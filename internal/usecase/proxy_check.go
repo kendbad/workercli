@@ -3,22 +3,27 @@ package usecase
 import (
 	"fmt"
 	"os"
-	proxy1 "workercli/internal/adapter/proxy"
+	"strings"
+	"workercli/internal/adapter/proxy"
 	"workercli/internal/adapter/worker"
 	"workercli/internal/domain/model"
-	"workercli/internal/proxy"
+	proxi "workercli/internal/infrastructure/proxy"
 	"workercli/pkg/utils"
 )
 
 type ProxyCheckUseCase struct {
-	reader     proxy1.Reader
-	checker    *proxy.Checker
+	reader     *proxy.ProxyReader
+	checker    *proxy.ProxyChecker
 	checkURL   string
 	workerPool *worker.Pool
 	logger     *utils.Logger
 }
 
-func NewProxyCheckUseCase(reader proxy1.Reader, checker *proxy.Checker, checkURL string, workers int, logger *utils.Logger, clientType string) *ProxyCheckUseCase {
+func NewProxyCheckUseCase(reader *proxy.ProxyReader, checker *proxy.ProxyChecker, checkURL string, workers int, logger *utils.Logger) *ProxyCheckUseCase {
+	// Đảm bảo checkURL có giao thức
+	if !strings.HasPrefix(checkURL, "http://") && !strings.HasPrefix(checkURL, "https://") {
+		checkURL = "http://" + checkURL
+	}
 	processor := &ProxyTaskProcessor{checker, checkURL, logger}
 	return &ProxyCheckUseCase{
 		reader:     reader,
@@ -30,13 +35,13 @@ func NewProxyCheckUseCase(reader proxy1.Reader, checker *proxy.Checker, checkURL
 }
 
 type ProxyTaskProcessor struct {
-	checker  *proxy.Checker
+	checker  *proxy.ProxyChecker
 	checkURL string
 	logger   *utils.Logger
 }
 
 func (p *ProxyTaskProcessor) ProcessTask(task model.Task) (model.Result, error) {
-	proxy, err := proxy.ParseProxy(task.TaskID)
+	proxy, err := proxi.ParseProxy(task.TaskID)
 	if err != nil {
 		p.logger.Errorf("Invalid proxy format: %s", task.TaskID)
 		return model.Result{TaskID: task.TaskID, Status: "Failed", Error: err.Error()}, err
