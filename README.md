@@ -49,11 +49,11 @@ workercli/
 ├── output/             # Kết quả sau khi xử lý
 ├── logs/               # Ghi log hệ thống
 ├── pkg/                # Thư viện dùng lại
-├── adapter/           # Logic chính của app (Clean Architecture)
+├── adapter/            # Logic chính của app (Clean Architecture)
 │   ├── config/         # Load cấu hình từ YAML
 │   ├── domain/         # Các model, interface cốt lõi (không phụ thuộc bên ngoài)
 │   ├── usecase/        # Tầng điều phối nghiệp vụ
-│   ├── adapter/      # Kết nối giữa domain và bên ngoài (file, TUI, proxy, worker)
+│   ├── adapter/        # Kết nối giữa domain và bên ngoài (file, TUI, proxy, worker)
 │   └── infrastructure/ # Cài đặt cụ thể TUI (bubbletea, tview,...)
 └── README.md           # Tài liệu hướng dẫn
 ```
