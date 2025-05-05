@@ -2,6 +2,12 @@
 
 WorkerCLI là một ứng dụng CLI được viết bằng Go, tập trung vào xử lý số lượng cực lớn task đồng thời với hiệu suất cao thông qua hệ thống worker đa luồng. Ứng dụng sử dụng Clean Architecture, tích hợp logger để ghi lại hoạt động và hỗ trợ giao diện TUI. WorkerCLI được thiết kế để tối ưu xử lý hàng loạt task nhanh chóng, dễ dàng mở rộng cho các tính năng như gửi HTTP request hoặc kiểm tra email.
 
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/kendbad/workercli/ci.yml?branch=main)
+![Docker Image Version](https://img.shields.io/docker/v/kendbad/workercli?label=docker)
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/kendbad/workercli)
+![Go version](https://img.shields.io/badge/Go-1.23-blue)
+![License](https://img.shields.io/github/license/kendbad/workercli)
+
 ## Tính năng chính
 
 - **Worker đa luồng**: Hệ thống worker pool mạnh mẽ, hỗ trợ xử lý đồng thời số lượng lớn task với queue tối ưu.
@@ -10,10 +16,13 @@ WorkerCLI là một ứng dụng CLI được viết bằng Go, tập trung vào
 - **TUI tích hợp**: Hỗ trợ giao diện người dùng văn bản (dùng thư viện `tview` `bubbletea`) để hiển thị tiến độ và kết quả khi cần.
 - **Cấu hình linh hoạt**: Sử dụng file YAML để cấu hình worker, input/output, và logger.
 - **Clean Architecture**: Mã nguồn được thiết kế mục đích học tập, cho người mới tiếp cận Clean Architecture. Thiết kế mô-đun, dễ bảo trì và mở rộng.
+- **Error Handling**: Hệ thống xử lý lỗi toàn diện với các cơ chế retry cho task thất bại.
+- **Docker Support**: Hỗ trợ đầy đủ Docker với multi-stage build để giảm kích thước image.
+- **CI/CD Pipeline**: GitHub Actions tự động hóa quá trình build, test và phát hành.
 
 ## Cài đặt yêu cầu:
 
-- Go 1.21 trở lên.
+- Go 1.23 trở lên.
 - Thư viện (tự động tải qua `go mod tidy`):
   - `github.com/sirupsen/logrus@master`
   - `gopkg.in/yaml.v3@master`
@@ -25,10 +34,12 @@ WorkerCLI là một ứng dụng CLI được viết bằng Go, tập trung vào
 
 ## Cài đặt
 
+### Cài đặt từ source
+
 1. Clone repository:
 
    ```bash
-   git clone https://github.com/<your-repo>/workercli.git
+   git clone https://github.com/kendbad/workercli.git
    cd workercli
    ```
 
@@ -38,11 +49,44 @@ WorkerCLI là một ứng dụng CLI được viết bằng Go, tập trung vào
    go mod tidy
    ```
 
-3. (Tùy chọn) Cài đặt toàn cục:
+3. Build ứng dụng:
 
    ```bash
-   go install github.com/<your-repo>/workercli@latest
+   make build
    ```
+
+4. (Tùy chọn) Cài đặt toàn cục:
+
+   ```bash
+   go install github.com/kendbad/workercli@latest
+   ```
+
+### Sử dụng Docker
+
+1. Pull image từ Docker Hub:
+
+   ```bash
+   docker pull kendbad/workercli:latest
+   ```
+
+2. Hoặc build từ source:
+
+   ```bash
+   docker build -t workercli:latest .
+   ```
+
+3. Chạy với Docker:
+
+   ```bash
+   docker run -v $(pwd)/input:/var/lib/workercli/input \
+              -v $(pwd)/output:/var/lib/workercli/output \
+              -v $(pwd)/logs:/var/log/workercli \
+              kendbad/workercli
+   ```
+
+### Tải bản release
+
+Các bản release được đóng gói sẵn cho nhiều nền tảng khác nhau. Bạn có thể tải về từ trang [GitHub Releases](https://github.com/kendbad/workercli/releases).
 
 ## Cách sử dụng
 
@@ -56,6 +100,13 @@ WorkerCLI là một ứng dụng CLI được viết bằng Go, tập trung vào
      task-data-3
      ```
 
+   - Hoặc `input/proxy.txt` với danh sách proxy (mỗi dòng một proxy):
+   
+     ```
+     http://1.2.3.4:8080
+     socks5://5.6.7.8:1080
+     ```
+
 2. **Cấu hình**:
 
    - Chỉnh sửa các file trong thư mục `configs/`:
@@ -63,6 +114,7 @@ WorkerCLI là một ứng dụng CLI được viết bằng Go, tập trung vào
      - `output.yaml`: Đường dẫn file đầu ra.
      - `worker.yaml`: Số lượng worker và kích thước queue (tùy chỉnh cho khối lượng lớn).
      - `logger.yaml`: Cấp độ log, định dạng, và đầu ra (console hoặc file).
+     - `proxy.yaml`: URL kiểm tra proxy và cấu hình timeout.
 
    Ví dụ `configs/worker.yaml`:
 
@@ -85,17 +137,24 @@ WorkerCLI là một ứng dụng CLI được viết bằng Go, tập trung vào
    - Chạy ở chế độ CLI (mặc định):
 
      ```bash
-     go run cmd/workercli/main.go -task
-     go run cmd/workercli/main.go -proxy
+     # Kiểm tra proxy
+     ./output/workercli -proxy
+     
+     # Xử lý task
+     ./output/workercli -task
+     
+     # Chỉ định loại HTTP client (mặc định: nethttp)
+     ./output/workercli -proxy -client fasthttp
      ```
 
    - Chạy với TUI:
 
      ```bash
-     go run cmd/workercli/main.go -proxy -tui tview
-     go run cmd/workercli/main.go -task -tui tview
-     go run cmd/workercli/main.go -proxy -tui bubbletea
-     go run cmd/workercli/main.go -task -tui bubbletea
+     # Sử dụng giao diện tview
+     ./output/workercli -proxy -tui tview
+     
+     # Sử dụng giao diện bubbletea
+     ./output/workercli -task -tui bubbletea
      ```
 
    Ứng dụng sẽ:
@@ -106,12 +165,45 @@ WorkerCLI là một ứng dụng CLI được viết bằng Go, tập trung vào
    - Hiển thị tiến độ/kết quả trong TUI (nếu bật).
    - Ghi log hoạt động vào console hoặc file.
 
+## Xử lý lỗi và cơ chế Retry
+
+WorkerCLI được trang bị cơ chế xử lý lỗi toàn diện:
+
+- **Tự động retry**: Các task thất bại sẽ được thử lại theo cấu hình retry.
+- **Timeout**: Mỗi task có thời gian timeout riêng để tránh blocking.
+- **Graceful shutdown**: Xử lý tắt ứng dụng một cách an toàn, đảm bảo không mất dữ liệu.
+
+Để cấu hình retry, chỉnh sửa file cấu hình tương ứng:
+
+```yaml
+# configs/retry.yaml (tạo mới nếu chưa có)
+max_retries: 3
+retry_delay: 2s
+```
+
+## Giám sát hiệu suất
+
+WorkerCLI cung cấp các số liệu về hiệu suất thông qua cờ `-metrics`:
+
+```bash
+./output/workercli -proxy -metrics
+```
+
+Số liệu được ghi vào file log và có thể xuất ra stdout, bao gồm:
+- Số lượng task đã xử lý
+- Thời gian xử lý trung bình
+- Tỷ lệ thành công/thất bại
+- Độ trễ của queue
+
 ## Mở rộng
 
 WorkerCLI được thiết kế để dễ dàng thêm các tính năng mới:
 
 - **Gửi HTTP request**: Thêm `RequestSender` vào `domain/service/` và triển khai trong `infrastructure/`.
 - **Kiểm tra email**: Tạo `EmailChecker` và các mô hình liên quan (như `EmailAccount`).
+- **Tích hợp API mới**: Thêm adapter mới trong thư mục `adapter/`.
+
+Xem thêm chi tiết về kiến trúc và hướng dẫn mở rộng trong [Readme.dev.md](Readme.dev.md).
 
 ## Ví dụ Log đầu ra khi không sử dụng TUI.
 
@@ -126,10 +218,22 @@ DEBUG[2025-05-02T12:00:02+07:00] Worker 1 hoàn thành task task-1 với trạng
 INFO[2025-05-02T12:00:02+07:00] Hoàn thành xử lý 1000 task
 ```
 
-## Góp ý
+## Đóng góp
 
-Nếu bạn có ý tưởng hoặc gặp vấn đề, vui lòng mở issue trên GitHub repository.
+Chúng tôi rất hoan nghênh mọi đóng góp! Vui lòng làm theo các bước sau:
+
+1. Fork repository
+2. Tạo branch mới (`git checkout -b feature/amazing-feature`)
+3. Commit thay đổi của bạn (`git commit -m 'Add some amazing feature'`)
+4. Push lên branch (`git push origin feature/amazing-feature`)
+5. Mở Pull Request
+
+Xem [CONTRIBUTING.md](CONTRIBUTING.md) để biết thêm chi tiết.
+
+## Lưu ý phiên bản
+
+Dự án này sử dụng [SemVer](http://semver.org/) để quản lý phiên bản.
 
 ## Giấy phép
 
-MIT License
+Dự án này được phân phối dưới Giấy phép MIT. Xem [LICENSE](LICENSE) để biết thêm thông tin.

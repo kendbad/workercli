@@ -1,0 +1,6 @@
+# Cấu hình retry cho các task thất bại
+max_retries: 3
+retry_delay: 2s
+timeout: 10s
+backoff_factor: 1.5
+jitter: 0.2 

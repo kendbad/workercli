@@ -17,7 +17,7 @@ import (
 
 func main() {
 	tuiMode := flag.String("tui", "tview", "Loại giao diện TUI: tview, bubbletea, termui")
-	checkProxy := flag.Bool("proxy", true, "Kiểm tra proxy từ proxy.txt")
+	checkProxy := flag.Bool("proxy", false, "Kiểm tra proxy từ proxy.txt")
 	checkTask := flag.Bool("task", false, "Kiểm tra task từ tasks.txt")
 	clientType := flag.String("client", "nethttp", "Thư viện gửi request: fasthttp, nethttp")
 	flag.Parse()
