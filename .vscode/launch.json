@@ -2,6 +2,14 @@
     // Sử dụng IntelliSense để tìm hiểu về các thuộc tính có thể sử dụng.
     // Di chuột qua các thuộc tính để xem mô tả.
     // Để biết thêm thông tin, hãy truy cập: https://go.microsoft.com/fwlink/?linkid=830387
+    
+    // Dự án này được tổ chức theo kiến trúc "Clean Architecture" của Robert C. Martin
+    // Trong Clean Architecture, mã nguồn được chia thành các tầng đồng tâm, từ trong ra ngoài:
+    // 1. Tầng Domain (Miền): Chứa các thực thể và quy tắc nghiệp vụ cốt lõi
+    // 2. Tầng Use Cases (Trường hợp sử dụng): Chứa logic nghiệp vụ cụ thể
+    // 3. Tầng Interface Adapters (Bộ điều hợp giao diện): Chuyển đổi dữ liệu giữa tầng Use Cases và các thành phần bên ngoài
+    // 4. Tầng Frameworks & Drivers: Các thành phần bên ngoài như database, UI, web frameworks...
+    
     "version": "0.2.0",
     "configurations": [
         

@@ -5,17 +5,23 @@ import (
 	"workercli/pkg/utils"
 )
 
-// Reader defines the interface for reading proxies.
+// BoDocProxy định nghĩa giao diện để đọc danh sách proxy.
+// Theo Clean Architecture, interface này là một port trong tầng adapter
+// giúp định nghĩa cách tương tác với nguồn dữ liệu bên ngoài
 type Reader interface {
 	ReadProxies(nguon string) ([]model.Proxy, error)
 }
 
-// ProxyReader is the adapter for reading proxies.
+// BoDocDanhSachProxy là bộ điều hợp (adapter) để đọc danh sách proxy.
+// Tuân thủ nguyên tắc Dependency Inversion, lớp này phụ thuộc vào interface
+// thay vì các triển khai cụ thể
 type ProxyReader struct {
-	boGhiNhatKy *utils.Logger
-	boDoc       Reader // Specific implementation (e.g., file reader)
+	boGhiNhatKy *utils.Logger // boGhiNhatKy: bộ ghi nhật ký
+	boDoc       Reader        // boDoc: bộ đọc - triển khai cụ thể (ví dụ: bộ đọc tệp tin)
 }
 
+// TaoBoDocProxy tạo một bộ điều hợp (adapter) mới để đọc danh sách proxy.
+// Áp dụng Dependency Injection để tiêm phụ thuộc
 func NewProxyReader(boGhiNhatKy *utils.Logger, boDoc Reader) *ProxyReader {
 	return &ProxyReader{
 		boGhiNhatKy: boGhiNhatKy,
@@ -23,6 +29,8 @@ func NewProxyReader(boGhiNhatKy *utils.Logger, boDoc Reader) *ProxyReader {
 	}
 }
 
+// ReadProxies đọc danh sách proxy từ một nguồn cụ thể.
+// Phương thức này ủy quyền việc đọc cho triển khai cụ thể (boDoc)
 func (r *ProxyReader) ReadProxies(nguon string) ([]model.Proxy, error) {
 	danhSachProxy, err := r.boDoc.ReadProxies(nguon)
 	if err != nil {

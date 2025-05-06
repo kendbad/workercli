@@ -82,7 +82,7 @@ workercli/
 │   │       └── proxy_service.go         # Interface xử lý proxy (BoKiemTraProxy)
 │
 │   ├── usecase/                          # Application logic: điều phối hành vi dựa trên yêu cầu từ adapter
-│   │   ├── batch_task.go                # Use case xử lý danh sách tacVu (XuLyLoDongTacVu)
+│   │   ├── batch_task.go                # Use case xử lý danh sách tacVu (XuLyHangLoatTacVu)
 │   │   └── proxy_check.go              # Use case kiểm tra proxy (KiemTraProxy)
 │
 │   ├── adapter/                          # Adapter layer: xử lý giao tiếp vào/ra hệ thống
@@ -167,65 +167,65 @@ workercli/
 │   ├── config/
 │   │   ├── loader.go                    // Đọc và parse file YAML
 │   │   └── model.go                     // Struct ánh xạ cấu hình
-│   ├── domain/
-│   │   ├── model/
-│   │   │   ├── task.go                  // Struct TacVu
-│   │   │   ├── proxy.go                 // Struct Proxy và ParseProxy
-│   │   │   ├── result.go                // Struct KetQua và KetQuaProxy
-│   │   │   └── config.go                // Struct cấu hình nội bộ
-│   │   └── service/
-│   │       ├── task_service.go          // Interface xử lý tacVu (BoXuLyTacVu)
-│   │       └── proxy_service.go         // Interface xử lý proxy (BoKiemTraProxy)
-│   ├── usecase/
-│   │   ├── batch_task.go                // Use case xử lý danh sách tacVu (XuLyLoDongTacVu)
-│   │   └── proxy_check.go               // Use case kiểm tra proxy (KiemTraProxy)
-│   ├── adapter/
-│   │   ├── input/
-│   │   │   ├── file_reader.go           // Đọc file txt
-│   │   │   └── parser.go                // Parse nội dung file
-│   │   ├── proxy/
-│   │   │   ├── reader.go                // Interface và logic đọc proxy
-│   │   │   └── checker.go               // Interface và logic kiểm tra proxy (BoKiemTra)
-│   │   ├── httpclient/
-│   │   │   └── http_client.go           // Interface HTTPClient
-│   │   ├── ipchecker/
-│   │   │   └── ip_checker.go            // Interface IPChecker
-│   │   ├── worker/
-│   │   │   ├── pool.go                  // Quản lý nhomXuLy (NhomXuLy)
-│   │   │   └── worker.go                // Một nguoiXuLy đơn lẻ (NguoiXuLy)
-│   │   └── tui/
-│   │       ├── factory.go               // Tạo renderer TUI
-│   │       ├── renderer.go              // Interface renderer
-│   │       ├── types.go                 // Kiểu dữ liệu chung cho TUI
-│   │       ├── coordinator.go           // Điều phối TUI
-│   │       ├── tui_factory.go           // Factory chọn renderer
-│   │       └── config.go                // Cấu hình TUI
-│   ├── infrastructure/
-│   │   ├── task/
-│   │   │   └── processor.go             // Xử lý tacVu (BoXuLy)
-│   │   ├── httpclient/
-│   │   │   ├── fasthttp_client.go       // Triển khai fasthttp
-│   │   │   └── nethttp_client.go        // Triển khai net/http
-│   │   ├── proxy/
-│   │   │   ├── file_reader.go           // Triển khai đọc proxy từ file
-│   │   │   └── ip_checker.go            // Triển khai kiểm tra proxy qua ipchecker (BoKiemTraIP)
-│   │   ├── ipchecker/
-│   │   │   └── api_checker.go           // Triển khai kiểm tra IP qua API
-│   │   └── tui/
-│   │       ├── bubbletea/
-│   │       │   ├── renderer.go          // Triển khai Bubbletea
-│   │       │   ├── proxy_renderer.go    // Renderer cho proxy
-│   │       │   ├── viewmodel.go         // View model
-│   │       │   └── components/
-│   │       │       ├── table.go         // Bảng hiển thị
-│   │       │       └── status.go        // Thanh trạng thái
-│   │       ├── tview/
-│   │       │   ├── renderer.go          // Triển khai Tview
-│   │       │   ├── proxy_renderer.go    // Renderer cho proxy
-│   │       │   ├── viewmodel.go         // View model
-│   │       │   └── components/
-│   │       │       ├── layout.go        // Layout TUI
-│   │       │       └── form.go          // Form nhập liệu
+│   │   ├── domain/
+│   │   │   ├── model/
+│   │   │   │   ├── task.go                  // Struct TacVu
+│   │   │   │   ├── proxy.go                 // Struct Proxy và ParseProxy
+│   │   │   │   ├── result.go                // Struct KetQua và KetQuaProxy
+│   │   │   │   └── config.go                // Struct cấu hình nội bộ
+│   │   │   └── service/
+│   │   │       ├── task_service.go          // Interface xử lý tacVu (BoXuLyTacVu)
+│   │   │       └── proxy_service.go         // Interface xử lý proxy (BoKiemTraProxy)
+│   │   ├── usecase/
+│   │   │   ├── batch_task.go                // Use case xử lý danh sách tacVu (XuLyHangLoatTacVu)
+│   │   │   └── proxy_check.go               // Use case kiểm tra proxy (KiemTraProxy)
+│   │   ├── adapter/
+│   │   │   ├── input/
+│   │   │   │   ├── file_reader.go           // Đọc file txt
+│   │   │   │   └── parser.go                // Parse nội dung file
+│   │   │   ├── proxy/
+│   │   │   │   ├── reader.go                // Interface và logic đọc proxy
+│   │   │   │   └── checker.go               // Interface và logic kiểm tra proxy (BoKiemTra)
+│   │   │   ├── httpclient/
+│   │   │   │   └── http_client.go           // Interface HTTPClient
+│   │   │   ├── ipchecker/
+│   │   │   │   └── ip_checker.go            // Interface IPChecker
+│   │   │   ├── worker/
+│   │   │   │   ├── pool.go                  // Quản lý nhomXuLy (NhomXuLy)
+│   │   │   │   └── worker.go                // Một nguoiXuLy đơn lẻ (NguoiXuLy)
+│   │   │   └── tui/
+│   │   │       ├── factory.go               // Tạo renderer TUI
+│   │   │       ├── renderer.go              // Interface renderer
+│   │   │       ├── types.go                 // Kiểu dữ liệu chung cho TUI
+│   │   │       ├── coordinator.go           // Điều phối TUI
+│   │   │       ├── tui_factory.go           // Factory chọn renderer
+│   │   │       └── config.go                // Cấu hình TUI
+│   │   ├── infrastructure/
+│   │   │   ├── task/
+│   │   │   │   └── processor.go             // Xử lý tacVu (BoXuLy)
+│   │   │   ├── httpclient/
+│   │   │   │   ├── fasthttp_client.go       // Triển khai fasthttp
+│   │   │   │   └── nethttp_client.go        // Triển khai net/http
+│   │   │   ├── proxy/
+│   │   │   │   ├── file_reader.go           // Triển khai đọc proxy từ file
+│   │   │   │   └── ip_checker.go            // Triển khai kiểm tra proxy qua ipchecker (BoKiemTraIP)
+│   │   │   ├── ipchecker/
+│   │   │   │   └── api_checker.go           // Triển khai kiểm tra IP qua API
+│   │   │   └── tui/
+│   │   │       ├── bubbletea/
+│   │   │       │   ├── renderer.go          // Triển khai Bubbletea
+│   │   │       │   ├── proxy_renderer.go    // Renderer cho proxy
+│   │   │       │   ├── viewmodel.go         // View model
+│   │   │       │   └── components/
+│   │   │       │       ├── table.go         // Bảng hiển thị
+│   │   │       │       └── status.go        // Thanh trạng thái
+│   │   │       ├── tview/
+│   │   │       │   ├── renderer.go          // Triển khai Tview
+│   │   │       │   ├── proxy_renderer.go    // Renderer cho proxy
+│   │   │       │   ├── viewmodel.go         // View model
+│   │   │       │   └── components/
+│   │   │       │       ├── layout.go        // Layout TUI
+│   │   │       │       └── form.go          // Form nhập liệu
 │   └── pkg/
 │       ├── utils/
 │       │   ├── logger.go                // Cấu hình logger
@@ -255,7 +255,7 @@ workercli/
    - Không phụ thuộc vào bất kỳ framework hay thư viện bên ngoài.
 
 2. Usecase Layer (Tầng ứng dụng):
-   - `XuLyLoDongTacVu`, `KiemTraProxy` - điều phối các tác vụ.
+   - `XuLyHangLoatTacVu`, `KiemTraProxy` - điều phối các tác vụ.
    - Chỉ phụ thuộc vào Domain Layer.
    - Thực hiện logic nghiệp vụ, không quan tâm đến chi tiết hiển thị UI hay lưu trữ.
 

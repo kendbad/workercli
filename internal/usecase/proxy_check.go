@@ -11,15 +11,20 @@ import (
 	"workercli/pkg/utils"
 )
 
+// KiemTraProxy là usecase để kiểm tra danh sách proxy.
+// Trong Clean Architecture, usecase chứa logic nghiệp vụ cụ thể
+// và điều phối các thành phần khác để thực hiện một trường hợp sử dụng.
 type KiemTraProxy struct {
-	boDoc           *proxy.ProxyReader
-	boKiemTra       *proxy.ProxyChecker
-	duongDanKiemTra string
-	nhomXuLy        *worker.NhomXuLy
-	boGhiNhatKy     *utils.Logger
+	boDoc           *proxy.ProxyReader    // boDoc: bộ đọc proxy
+	boKiemTra       *proxy.BoKiemTraProxy // boKiemTra: bộ kiểm tra proxy
+	duongDanKiemTra string                // duongDanKiemTra: đường dẫn kiểm tra
+	nhomXuLy        *worker.NhomXuLy      // nhomXuLy: nhóm xử lý - quản lý pool worker
+	boGhiNhatKy     *utils.Logger         // boGhiNhatKy: bộ ghi nhật ký
 }
 
-func TaoBoKiemTraProxy(boDoc *proxy.ProxyReader, boKiemTra *proxy.ProxyChecker, duongDanKiemTra string, soLuongXuLy int, boGhiNhatKy *utils.Logger) *KiemTraProxy {
+// TaoBoKiemTraProxy tạo một usecase mới để kiểm tra proxy.
+// Áp dụng Dependency Injection để tiêm phụ thuộc qua tham số
+func TaoBoKiemTraProxy(boDoc *proxy.ProxyReader, boKiemTra *proxy.BoKiemTraProxy, duongDanKiemTra string, soLuongXuLy int, boGhiNhatKy *utils.Logger) *KiemTraProxy {
 	// Đảm bảo duongDanKiemTra có giao thức
 	if !strings.HasPrefix(duongDanKiemTra, "http://") && !strings.HasPrefix(duongDanKiemTra, "https://") {
 		duongDanKiemTra = "http://" + duongDanKiemTra
@@ -34,12 +39,17 @@ func TaoBoKiemTraProxy(boDoc *proxy.ProxyReader, boKiemTra *proxy.ProxyChecker, 
 	}
 }
 
+// BoXuLyTacVuProxy là một adapter nội bộ để xử lý tác vụ kiểm tra proxy.
+// Đây là một ví dụ về adapter pattern trong Clean Architecture,
+// cho phép usecase tương tác với các worker thông qua một giao diện chung.
 type BoXuLyTacVuProxy struct {
-	boKiemTra       *proxy.ProxyChecker
-	duongDanKiemTra string
-	boGhiNhatKy     *utils.Logger
+	boKiemTra       *proxy.BoKiemTraProxy // boKiemTra: bộ kiểm tra proxy
+	duongDanKiemTra string                // duongDanKiemTra: đường dẫn kiểm tra
+	boGhiNhatKy     *utils.Logger         // boGhiNhatKy: bộ ghi nhật ký
 }
 
+// XuLyTacVu xử lý một tác vụ kiểm tra proxy.
+// Implements giao diện worker.TaskProcessor để worker có thể gọi
 func (p *BoXuLyTacVuProxy) XuLyTacVu(tacVu model.TacVu) (model.KetQua, error) {
 	proxy, err := proxi.ParseProxy(tacVu.MaTacVu)
 	if err != nil {
@@ -57,6 +67,8 @@ func (p *BoXuLyTacVuProxy) XuLyTacVu(tacVu model.TacVu) (model.KetQua, error) {
 	return model.KetQua{MaTacVu: tacVu.MaTacVu, TrangThai: trangThai}, nil
 }
 
+// ThucThi thực hiện việc kiểm tra tất cả proxy từ một tệp tin.
+// Đây là phương thức chính của usecase, điều phối toàn bộ luồng xử lý
 func (uc *KiemTraProxy) ThucThi(duongDanFileProxy string) ([]model.KetQuaProxy, error) {
 	danhSachProxy, err := uc.boDoc.ReadProxies(duongDanFileProxy)
 	if err != nil {
