@@ -38,7 +38,7 @@ Dễ phân chia nhóm: nhóm A làm UI, nhóm B làm core logic.
 workercli/
 ├── cmd/                # Điểm vào chính của app
 ├── configs/            # File cấu hình YAML
-├── input/              # Dữ liệu đầu vào (tacVu, trungGian)
+├── input/              # Dữ liệu đầu vào (tacVu, proxy)
 ├── output/             # Kết quả sau khi xử lý
 ├── logs/               # Ghi log hệ thống
 ├── pkg/                # Thư viện dùng lại
@@ -46,7 +46,7 @@ workercli/
 │   ├── config/         # Load cấu hình từ YAML
 │   ├── domain/         # Các model, interface cốt lõi (không phụ thuộc bên ngoài)
 │   ├── usecase/        # Tầng điều phối nghiệp vụ
-│   ├── adapter/        # Kết nối giữa domain và bên ngoài (file, TUI, trungGian, nguoiXuLy)
+│   ├── adapter/        # Kết nối giữa domain và bên ngoài (file, TUI, proxy, nguoiXuLy)
 │   └── infrastructure/ # Cài đặt cụ thể TUI (bubbletea, tview,...)
 └── README.md           # Tài liệu hướng dẫn
 ```
@@ -64,7 +64,7 @@ workercli/
 │   ├── output.yaml                       # Cấu hình xuất dữ liệu
 │   ├── worker.yaml                       # Cấu hình nguoiXuLy/nhomXuLy
 │   ├── logger.yaml                       # Cấu hình logger
-│   └── proxy.yaml                        # Cấu hình kiểm tra trungGian
+│   └── proxy.yaml                        # Cấu hình kiểm tra proxy
 │
 ├── internal/                             # Logic nội bộ của ứng dụng (theo Clean Architecture)
 │   ├── config/                           # Loader config và model cấu hình
@@ -74,24 +74,24 @@ workercli/
 │   ├── domain/                           # Business domain: định nghĩa logic cốt lõi và giao diện (interface)
 │   │   ├── model/                        # Các struct đại diện cho dữ liệu trong domain
 │   │   │   ├── task.go                   # Struct đại diện cho nhiệm vụ (TacVu)
-│   │   │   ├── proxy.go                  # Struct đại diện trungGian (TrungGian)
-│   │   │   ├── result.go                 # Kết quả xử lý tacVu hoặc trungGian (KetQua, KetQuaTrungGian)
+│   │   │   ├── proxy.go                  # Struct đại diện proxy (Proxy)
+│   │   │   ├── result.go                 # Kết quả xử lý tacVu hoặc proxy (KetQua, KetQuaProxy)
 │   │   │   └── config.go                 # Struct cấu hình nội bộ
 │   │   └── service/                      # Interface của các logic xử lý domain
 │   │       ├── task_service.go          # Interface xử lý tacVu (BoXuLyTacVu)
-│   │       └── proxy_service.go         # Interface xử lý trungGian (BoKiemTraTrungGian)
+│   │       └── proxy_service.go         # Interface xử lý proxy (BoKiemTraProxy)
 │
 │   ├── usecase/                          # Application logic: điều phối hành vi dựa trên yêu cầu từ adapter
 │   │   ├── batch_task.go                # Use case xử lý danh sách tacVu (XuLyLoDongTacVu)
-│   │   └── proxy_check.go              # Use case kiểm tra trungGian (KiemTraTrungGian)
+│   │   └── proxy_check.go              # Use case kiểm tra proxy (KiemTraProxy)
 │
 │   ├── adapter/                          # Adapter layer: xử lý giao tiếp vào/ra hệ thống
-│   │   ├── input/                        # Đọc file đầu vào (tacVu, trungGian,...)
+│   │   ├── input/                        # Đọc file đầu vào (tacVu, proxy,...)
 │   │   │   ├── file_reader.go            # Đọc file txt
 │   │   │   └── parser.go                 # Parse nội dung file
-│   │   ├── proxy/                        # Giao tiếp với logic kiểm tra trungGian
-│   │   │   ├── reader.go                 # Đọc danh sách trungGian
-│   │   │   └── checker.go                # Gửi request kiểm tra trungGian
+│   │   ├── proxy/                        # Giao tiếp với logic kiểm tra proxy
+│   │   │   ├── reader.go                 # Đọc danh sách proxy
+│   │   │   └── checker.go                # Gửi request kiểm tra proxy
 │   │   ├── worker/                       # Tạo nhomXuLy, xử lý đồng thời
 │   │   │   ├── pool.go                   # Quản lý nhomXuLy (NhomXuLy)
 │   │   │   └── worker.go                 # Một nguoiXuLy đơn lẻ (NguoiXuLy)
@@ -107,7 +107,7 @@ workercli/
 │   │       │   ├── proxy_renderer.go
 │   │       │   ├── viewmodel.go
 │   │       │   └── components/
-│   │       │       ├── table.go          # Bảng hiển thị tacVu/trungGian
+│   │       │       ├── table.go          # Bảng hiển thị tacVu/proxy
 │   │       │       └── status.go         # Thanh trạng thái (status bar)
 │   │       ├── tview/                    # Cài đặt TUI bằng thư viện Tview
 │   │       │   ├── renderer.go
@@ -135,11 +135,11 @@ workercli/
 │
 ├── input/                                 # Dữ liệu đầu vào (cho testing hoặc thực tế)
 │   ├── tasks.txt                          # Danh sách tacVu
-│   └── proxy.txt                          # Danh sách trungGian
+│   └── proxy.txt                          # Danh sách proxy
 │
 ├── output/                                # Kết quả xuất ra
 │   ├── results.txt                        # Kết quả tacVu
-│   └── proxy_results.txt                  # Kết quả kiểm tra trungGian
+│   └── proxy_results.txt                  # Kết quả kiểm tra proxy
 │
 ├── logs/                                  # Log file ứng dụng
 │   └── app.log
@@ -162,7 +162,7 @@ workercli/
 │   ├── output.yaml                      // Cấu hình xuất dữ liệu
 │   ├── worker.yaml                      // Cấu hình nguoiXuLy/nhomXuLy
 │   ├── logger.yaml                      // Cấu hình logger
-│   └── proxy.yaml                       // Cấu hình kiểm tra trungGian
+│   └── proxy.yaml                       // Cấu hình kiểm tra proxy
 ├── internal/
 │   ├── config/
 │   │   ├── loader.go                    // Đọc và parse file YAML
@@ -170,22 +170,22 @@ workercli/
 │   ├── domain/
 │   │   ├── model/
 │   │   │   ├── task.go                  // Struct TacVu
-│   │   │   ├── proxy.go                 // Struct TrungGian và ParseTrungGian
-│   │   │   ├── result.go                // Struct KetQua và KetQuaTrungGian
+│   │   │   ├── proxy.go                 // Struct Proxy và ParseProxy
+│   │   │   ├── result.go                // Struct KetQua và KetQuaProxy
 │   │   │   └── config.go                // Struct cấu hình nội bộ
 │   │   └── service/
 │   │       ├── task_service.go          // Interface xử lý tacVu (BoXuLyTacVu)
-│   │       └── proxy_service.go         // Interface xử lý trungGian (BoKiemTraTrungGian)
+│   │       └── proxy_service.go         // Interface xử lý proxy (BoKiemTraProxy)
 │   ├── usecase/
 │   │   ├── batch_task.go                // Use case xử lý danh sách tacVu (XuLyLoDongTacVu)
-│   │   └── proxy_check.go               // Use case kiểm tra trungGian (KiemTraTrungGian)
+│   │   └── proxy_check.go               // Use case kiểm tra proxy (KiemTraProxy)
 │   ├── adapter/
 │   │   ├── input/
 │   │   │   ├── file_reader.go           // Đọc file txt
 │   │   │   └── parser.go                // Parse nội dung file
 │   │   ├── proxy/
-│   │   │   ├── reader.go                // Interface và logic đọc trungGian
-│   │   │   └── checker.go               // Interface và logic kiểm tra trungGian (BoKiemTra)
+│   │   │   ├── reader.go                // Interface và logic đọc proxy
+│   │   │   └── checker.go               // Interface và logic kiểm tra proxy (BoKiemTra)
 │   │   ├── httpclient/
 │   │   │   └── http_client.go           // Interface HTTPClient
 │   │   ├── ipchecker/
@@ -207,21 +207,21 @@ workercli/
 │   │   │   ├── fasthttp_client.go       // Triển khai fasthttp
 │   │   │   └── nethttp_client.go        // Triển khai net/http
 │   │   ├── proxy/
-│   │   │   ├── file_reader.go           // Triển khai đọc trungGian từ file
-│   │   │   └── ip_checker.go            // Triển khai kiểm tra trungGian qua ipchecker (BoKiemTraIP)
+│   │   │   ├── file_reader.go           // Triển khai đọc proxy từ file
+│   │   │   └── ip_checker.go            // Triển khai kiểm tra proxy qua ipchecker (BoKiemTraIP)
 │   │   ├── ipchecker/
 │   │   │   └── api_checker.go           // Triển khai kiểm tra IP qua API
 │   │   └── tui/
 │   │       ├── bubbletea/
 │   │       │   ├── renderer.go          // Triển khai Bubbletea
-│   │       │   ├── proxy_renderer.go    // Renderer cho trungGian
+│   │       │   ├── proxy_renderer.go    // Renderer cho proxy
 │   │       │   ├── viewmodel.go         // View model
 │   │       │   └── components/
 │   │       │       ├── table.go         // Bảng hiển thị
 │   │       │       └── status.go        // Thanh trạng thái
 │   │       ├── tview/
 │   │       │   ├── renderer.go          // Triển khai Tview
-│   │       │   ├── proxy_renderer.go    // Renderer cho trungGian
+│   │       │   ├── proxy_renderer.go    // Renderer cho proxy
 │   │       │   ├── viewmodel.go         // View model
 │   │       │   └── components/
 │   │       │       ├── layout.go        // Layout TUI
@@ -234,10 +234,10 @@ workercli/
 │           └── logger.go                // Package logger
 ├── input/
 │   ├── tasks.txt                        // Danh sách tacVu
-│   └── proxy.txt                        // Danh sách trungGian
+│   └── proxy.txt                        // Danh sách proxy
 ├── output/
 │   ├── results.txt                      // Kết quả tacVu
-│   └── proxy_results.txt                // Kết quả kiểm tra trungGian
+│   └── proxy_results.txt                // Kết quả kiểm tra proxy
 ├── logs/
 │   └── app.log                          // Log ứng dụng
 ├── go.mod                               // Module Go
@@ -250,12 +250,12 @@ workercli/
 
 1. Domain Layer (Tầng miền):
    - Chứa Model và Service.
-   - Model: `TacVu`, `KetQua`, `TrungGian`, `KetQuaTrungGian` - đại diện cho khái niệm trong hệ thống.
-   - Service: `BoXuLyTacVu`, `BoKiemTraTrungGian` - định nghĩa giao diện xử lý.
+   - Model: `TacVu`, `KetQua`, `Proxy`, `KetQuaProxy` - đại diện cho khái niệm trong hệ thống.
+   - Service: `BoXuLyTacVu`, `BoKiemTraProxy` - định nghĩa giao diện xử lý.
    - Không phụ thuộc vào bất kỳ framework hay thư viện bên ngoài.
 
 2. Usecase Layer (Tầng ứng dụng):
-   - `XuLyLoDongTacVu`, `KiemTraTrungGian` - điều phối các tác vụ.
+   - `XuLyLoDongTacVu`, `KiemTraProxy` - điều phối các tác vụ.
    - Chỉ phụ thuộc vào Domain Layer.
    - Thực hiện logic nghiệp vụ, không quan tâm đến chi tiết hiển thị UI hay lưu trữ.
 
@@ -278,7 +278,7 @@ Việc chuyển đổi tên các thành phần từ tiếng Anh sang tiếng Vi�
 
 ### 1. Thêm usecase mới
 
-Ví dụ thêm kiểm tra trungGian SOCKS5:
+Ví dụ thêm kiểm tra proxy SOCKS5:
 
 1. Tạo model trong domain/model
 2. Định nghĩa interface trong domain/service
@@ -299,8 +299,8 @@ Ví dụ thêm kiểm tra trungGian SOCKS5:
 
 ## Quy tắc đặt tên
 
-- Model domain: `TacVu`, `KetQua`, `TrungGian`, `KetQuaTrungGian`
-- Interface: `BoXuLyTacVu`, `BoKiemTraTrungGian`, `BoKiemTra`
+- Model domain: `TacVu`, `KetQua`, `Proxy`, `KetQuaProxy`
+- Interface: `BoXuLyTacVu`, `BoKiemTraProxy`, `BoKiemTra`
 - Triển khai cụ thể: `BoXuLy`, `BoKiemTraIP`
 - Biến: sử dụng lowerCamelCase trong tiếng Việt (`maTacVu`, `boGhiNhatKy`)
 - Hằng số: sử dụng SNAKE_CASE (`MAX_SO_LUONG_NGUOI_XU_LY`)

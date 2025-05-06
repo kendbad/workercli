@@ -142,7 +142,7 @@ func (r *BubbleTeaRenderer) AddTaskResult(ketQua model.KetQua) {
 	}
 }
 
-func (r *BubbleTeaRenderer) AddProxyResult(ketQua model.KetQuaTrungGian) {
+func (r *BubbleTeaRenderer) AddProxyResult(ketQua model.KetQuaProxy) {
 	// Not used in this renderer
 }
 

@@ -15,9 +15,9 @@ import (
 // BubbleTeaProxyRenderer for ProxyCheck
 type BubbleTeaProxyRenderer struct {
 	boGhiNhatKy *utils.Logger
-	ketQua      *[]model.KetQuaTrungGian
+	ketQua      *[]model.KetQuaProxy
 	khoaKetQua  *sync.Mutex
-	kenhKetQua  chan model.KetQuaTrungGian
+	kenhKetQua  chan model.KetQuaProxy
 	kenhDong    chan struct{}
 	teaProgram  *tea.Program
 }
@@ -29,9 +29,9 @@ type ProxyRendererModel struct {
 	selectedRow int
 }
 
-// KetQuaTrungGianMsg represents a proxy result message
-type KetQuaTrungGianMsg struct {
-	KetQua model.KetQuaTrungGian
+// KetQuaProxyMsg represents a proxy result message
+type KetQuaProxyMsg struct {
+	KetQua model.KetQuaProxy
 }
 
 func NewProxyRendererModel(renderer *BubbleTeaProxyRenderer) ProxyRendererModel {
@@ -84,7 +84,7 @@ func (m ProxyRendererModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tea.WindowSizeMsg:
 		m.status.UpdateViewport(msg.Width, msg.Height, components.RenderProxyTable(m.renderer.ketQua, m.selectedRow))
-	case KetQuaTrungGianMsg:
+	case KetQuaProxyMsg:
 		m.renderer.khoaKetQua.Lock()
 		*m.renderer.ketQua = append(*m.renderer.ketQua, msg.KetQua)
 		m.renderer.khoaKetQua.Unlock()
@@ -102,7 +102,7 @@ func (m ProxyRendererModel) View() string {
 }
 
 // NewBubbleTeaProxyRenderer creates a new BubbleTeaProxyRenderer
-func NewBubbleTeaProxyRenderer(boGhiNhatKy *utils.Logger, ketQua *[]model.KetQuaTrungGian, khoaKetQua *sync.Mutex, kenhKetQua chan model.KetQuaTrungGian, kenhDong chan struct{}) *BubbleTeaProxyRenderer {
+func NewBubbleTeaProxyRenderer(boGhiNhatKy *utils.Logger, ketQua *[]model.KetQuaProxy, khoaKetQua *sync.Mutex, kenhKetQua chan model.KetQuaProxy, kenhDong chan struct{}) *BubbleTeaProxyRenderer {
 	return &BubbleTeaProxyRenderer{
 		boGhiNhatKy: boGhiNhatKy,
 		ketQua:      ketQua,
@@ -119,7 +119,7 @@ func (r *BubbleTeaProxyRenderer) Start() error {
 			select {
 			case ketQua := <-r.kenhKetQua:
 				r.boGhiNhatKy.Infof("Bubbletea sending proxy result: %v", ketQua)
-				r.teaProgram.Send(KetQuaTrungGianMsg{KetQua: ketQua})
+				r.teaProgram.Send(KetQuaProxyMsg{KetQua: ketQua})
 			case <-r.kenhDong:
 				r.boGhiNhatKy.Info("Bubbletea closing proxy renderer")
 				r.teaProgram.Quit()
@@ -138,7 +138,7 @@ func (r *BubbleTeaProxyRenderer) AddTaskResult(ketQua model.KetQua) {
 	// Not used in this renderer
 }
 
-func (r *BubbleTeaProxyRenderer) AddProxyResult(ketQua model.KetQuaTrungGian) {
+func (r *BubbleTeaProxyRenderer) AddProxyResult(ketQua model.KetQuaProxy) {
 	select {
 	case r.kenhKetQua <- ketQua:
 		r.boGhiNhatKy.Infof("Added proxy result to channel: %v", ketQua)

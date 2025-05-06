@@ -19,15 +19,15 @@ func NewAPIChecker(loaiKetNoi string, boGhiNhatKy *utils.Logger) *APIChecker {
 	return &APIChecker{ketNoi: ketNoi, boGhiNhatKy: boGhiNhatKy}
 }
 
-func (c *APIChecker) CheckIP(trungGian model.TrungGian, duongDanKiemTra string) (string, int, error) {
+func (c *APIChecker) CheckIP(proxy model.Proxy, duongDanKiemTra string) (string, int, error) {
 	// Đảm bảo duongDanKiemTra là URL hợp lệ
 	if !strings.HasPrefix(duongDanKiemTra, "http://") && !strings.HasPrefix(duongDanKiemTra, "https://") {
 		duongDanKiemTra = "http://" + duongDanKiemTra
 	}
 
-	noiDung, maKetQua, err := c.ketNoi.DoRequest(trungGian, duongDanKiemTra)
+	noiDung, maKetQua, err := c.ketNoi.DoRequest(proxy, duongDanKiemTra)
 	if err != nil {
-		c.boGhiNhatKy.Errorf("Kiểm tra IP thất bại cho proxy %s://%s:%s: %v", trungGian.GiaoDien, trungGian.DiaChi, trungGian.Cong, err)
+		c.boGhiNhatKy.Errorf("Kiểm tra IP thất bại cho proxy %s://%s:%s: %v", proxy.GiaoDien, proxy.DiaChi, proxy.Cong, err)
 		return "", maKetQua, err
 	}
 

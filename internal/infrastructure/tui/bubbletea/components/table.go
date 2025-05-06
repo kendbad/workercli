@@ -45,7 +45,7 @@ func RenderTaskTable(ketQua *[]model.KetQua, selectedRow int) string {
 }
 
 // RenderProxyTable renders the table for proxy results
-func RenderProxyTable(ketQua *[]model.KetQuaTrungGian, selectedRow int) string {
+func RenderProxyTable(ketQua *[]model.KetQuaProxy, selectedRow int) string {
 	var buf strings.Builder
 
 	header := []string{"Giao thức", "Địa chỉ IP", "Cổng", "IP đã phân giải", "Trạng thái", "Lỗi"}
@@ -59,9 +59,9 @@ func RenderProxyTable(ketQua *[]model.KetQuaTrungGian, selectedRow int) string {
 
 	for i, kq := range *ketQua {
 		row := []string{
-			kq.TrungGian.GiaoDien,
-			kq.TrungGian.DiaChi,
-			kq.TrungGian.Cong,
+			kq.Proxy.GiaoDien,
+			kq.Proxy.DiaChi,
+			kq.Proxy.Cong,
 			kq.DiaChi,
 			kq.TrangThai,
 			kq.LoiXayRa,

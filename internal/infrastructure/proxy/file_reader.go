@@ -15,7 +15,7 @@ func NewFileReader(boGhiNhatKy *utils.Logger) *FileReader {
 	return &FileReader{boGhiNhatKy: boGhiNhatKy}
 }
 
-func (r *FileReader) ReadProxies(duongDanTep string) ([]model.TrungGian, error) {
+func (r *FileReader) ReadProxies(duongDanTep string) ([]model.Proxy, error) {
 	duongDanTep = utils.AutoPath(duongDanTep)
 	tep, err := os.Open(duongDanTep)
 	if err != nil {
@@ -24,19 +24,19 @@ func (r *FileReader) ReadProxies(duongDanTep string) ([]model.TrungGian, error) 
 	}
 	defer tep.Close()
 
-	var danhSachTrungGian []model.TrungGian
+	var danhSachProxy []model.Proxy
 	danhSach := bufio.NewScanner(tep)
 	for danhSach.Scan() {
 		dong := danhSach.Text()
 		if dong == "" {
 			continue
 		}
-		trungGian, err := ParseProxy(dong)
+		proxy, err := ParseProxy(dong)
 		if err != nil {
 			r.boGhiNhatKy.Warnf("Bỏ qua proxy không hợp lệ %s: %v", dong, err)
 			continue
 		}
-		danhSachTrungGian = append(danhSachTrungGian, trungGian)
+		danhSachProxy = append(danhSachProxy, proxy)
 	}
 
 	if err := danhSach.Err(); err != nil {
@@ -44,5 +44,5 @@ func (r *FileReader) ReadProxies(duongDanTep string) ([]model.TrungGian, error) 
 		return nil, err
 	}
 
-	return danhSachTrungGian, nil
+	return danhSachProxy, nil
 }

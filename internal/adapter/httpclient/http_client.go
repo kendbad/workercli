@@ -8,7 +8,7 @@ import (
 
 // HTTPClient defines the interface for sending HTTP requests.
 type HTTPClient interface {
-	DoRequest(trungGian model.TrungGian, duongDan string) ([]byte, int, error)
+	DoRequest(proxy model.Proxy, duongDan string) ([]byte, int, error)
 }
 
 // Factory creates an HTTPClient based on the client type.

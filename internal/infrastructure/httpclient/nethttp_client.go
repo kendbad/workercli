@@ -22,7 +22,7 @@ func NewNetHTTPClient(boGhiNhatKy *utils.Logger) *NetHTTPClient {
 	return &NetHTTPClient{boGhiNhatKy: boGhiNhatKy}
 }
 
-func (c *NetHTTPClient) DoRequest(trungGian model.TrungGian, duongDan string) ([]byte, int, error) {
+func (c *NetHTTPClient) DoRequest(proxy model.Proxy, duongDan string) ([]byte, int, error) {
 	// Tạo http.Transport với cấu hình chung
 	transport := &http.Transport{
 		DialContext: (&net.Dialer{
@@ -36,30 +36,30 @@ func (c *NetHTTPClient) DoRequest(trungGian model.TrungGian, duongDan string) ([
 	}
 
 	// Xử lý proxy dựa trên giao thức
-	diaChiTrungGian := fmt.Sprintf("%s:%s", trungGian.DiaChi, trungGian.Cong)
-	switch trungGian.GiaoDien {
+	diaChiProxy := fmt.Sprintf("%s:%s", proxy.DiaChi, proxy.Cong)
+	switch proxy.GiaoDien {
 	case "http", "https":
-		proxyURL, err := url.Parse(fmt.Sprintf("%s://%s", trungGian.GiaoDien, diaChiTrungGian))
+		proxyURL, err := url.Parse(fmt.Sprintf("%s://%s", proxy.GiaoDien, diaChiProxy))
 		if err != nil {
-			c.boGhiNhatKy.Errorf("URL proxy không hợp lệ %s: %v", diaChiTrungGian, err)
+			c.boGhiNhatKy.Errorf("URL proxy không hợp lệ %s: %v", diaChiProxy, err)
 			return nil, 0, fmt.Errorf("URL proxy không hợp lệ: %v", err)
 		}
 		transport.Proxy = http.ProxyURL(proxyURL)
 	case "socks5":
-		dialer, err := goproxy.SOCKS5("tcp", diaChiTrungGian, nil, &net.Dialer{
+		dialer, err := goproxy.SOCKS5("tcp", diaChiProxy, nil, &net.Dialer{
 			Timeout:   5 * time.Second,
 			KeepAlive: 30 * time.Second,
 		})
 		if err != nil {
-			c.boGhiNhatKy.Errorf("Không thể tạo kết nối SOCKS5 cho %s: %v", diaChiTrungGian, err)
+			c.boGhiNhatKy.Errorf("Không thể tạo kết nối SOCKS5 cho %s: %v", diaChiProxy, err)
 			return nil, 0, fmt.Errorf("không thể tạo kết nối SOCKS5: %v", err)
 		}
 		transport.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
 			return dialer.Dial(network, addr)
 		}
 	default:
-		c.boGhiNhatKy.Errorf("Giao thức proxy không được hỗ trợ: %s", trungGian.GiaoDien)
-		return nil, 0, fmt.Errorf("giao thức proxy không được hỗ trợ: %s", trungGian.GiaoDien)
+		c.boGhiNhatKy.Errorf("Giao thức proxy không được hỗ trợ: %s", proxy.GiaoDien)
+		return nil, 0, fmt.Errorf("giao thức proxy không được hỗ trợ: %s", proxy.GiaoDien)
 	}
 
 	// Tạo HTTP client

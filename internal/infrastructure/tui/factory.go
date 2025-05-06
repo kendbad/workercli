@@ -38,7 +38,7 @@ func (f *RendererFactoryImpl) CreateTaskRenderer(boGhiNhatKy *utils.Logger, ketQ
 	}
 }
 
-func (f *RendererFactoryImpl) CreateProxyRenderer(boGhiNhatKy *utils.Logger, ketQua *[]model.KetQuaTrungGian, khoaKetQua *sync.Mutex, kenhKetQua chan model.KetQuaTrungGian, kenhDong chan struct{}) tui.Renderer {
+func (f *RendererFactoryImpl) CreateProxyRenderer(boGhiNhatKy *utils.Logger, ketQua *[]model.KetQuaProxy, khoaKetQua *sync.Mutex, kenhKetQua chan model.KetQuaProxy, kenhDong chan struct{}) tui.Renderer {
 	switch f.kieuHienThi {
 	case tui.TUIModeTView:
 		return tview.NewTViewProxyRenderer(boGhiNhatKy, ketQua, khoaKetQua, kenhKetQua, kenhDong)

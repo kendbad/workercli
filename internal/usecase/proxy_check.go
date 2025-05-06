@@ -11,7 +11,7 @@ import (
 	"workercli/pkg/utils"
 )
 
-type KiemTraTrungGian struct {
+type KiemTraProxy struct {
 	boDoc           *proxy.ProxyReader
 	boKiemTra       *proxy.ProxyChecker
 	duongDanKiemTra string
@@ -19,35 +19,35 @@ type KiemTraTrungGian struct {
 	boGhiNhatKy     *utils.Logger
 }
 
-func TaoBoKiemTraTrungGian(boDoc *proxy.ProxyReader, boKiemTra *proxy.ProxyChecker, duongDanKiemTra string, soLuongXuLy int, boGhiNhatKy *utils.Logger) *KiemTraTrungGian {
+func TaoBoKiemTraProxy(boDoc *proxy.ProxyReader, boKiemTra *proxy.ProxyChecker, duongDanKiemTra string, soLuongXuLy int, boGhiNhatKy *utils.Logger) *KiemTraProxy {
 	// Đảm bảo duongDanKiemTra có giao thức
 	if !strings.HasPrefix(duongDanKiemTra, "http://") && !strings.HasPrefix(duongDanKiemTra, "https://") {
 		duongDanKiemTra = "http://" + duongDanKiemTra
 	}
-	boXuLyTrungGian := &BoXuLyTacVuTrungGian{boKiemTra, duongDanKiemTra, boGhiNhatKy}
-	return &KiemTraTrungGian{
+	boXuLyProxy := &BoXuLyTacVuProxy{boKiemTra, duongDanKiemTra, boGhiNhatKy}
+	return &KiemTraProxy{
 		boDoc:           boDoc,
 		boKiemTra:       boKiemTra,
 		duongDanKiemTra: duongDanKiemTra,
-		nhomXuLy:        worker.TaoNhomXuLy(soLuongXuLy, boXuLyTrungGian, boGhiNhatKy),
+		nhomXuLy:        worker.TaoNhomXuLy(soLuongXuLy, boXuLyProxy, boGhiNhatKy),
 		boGhiNhatKy:     boGhiNhatKy,
 	}
 }
 
-type BoXuLyTacVuTrungGian struct {
+type BoXuLyTacVuProxy struct {
 	boKiemTra       *proxy.ProxyChecker
 	duongDanKiemTra string
 	boGhiNhatKy     *utils.Logger
 }
 
-func (p *BoXuLyTacVuTrungGian) XuLyTacVu(tacVu model.TacVu) (model.KetQua, error) {
-	trungGian, err := proxi.ParseProxy(tacVu.MaTacVu)
+func (p *BoXuLyTacVuProxy) XuLyTacVu(tacVu model.TacVu) (model.KetQua, error) {
+	proxy, err := proxi.ParseProxy(tacVu.MaTacVu)
 	if err != nil {
 		p.boGhiNhatKy.Errorf("Định dạng proxy không hợp lệ: %s", tacVu.MaTacVu)
 		return model.KetQua{MaTacVu: tacVu.MaTacVu, TrangThai: "Thất bại", LoiXayRa: err.Error()}, err
 	}
 
-	diaChi, trangThai, err := p.boKiemTra.CheckProxy(trungGian, p.duongDanKiemTra)
+	diaChi, trangThai, err := p.boKiemTra.CheckProxy(proxy, p.duongDanKiemTra)
 	if err != nil {
 		p.boGhiNhatKy.Errorf("Kiểm tra proxy thất bại %s: %v", tacVu.MaTacVu, err)
 		return model.KetQua{MaTacVu: tacVu.MaTacVu, TrangThai: trangThai, LoiXayRa: err.Error()}, err
@@ -57,29 +57,29 @@ func (p *BoXuLyTacVuTrungGian) XuLyTacVu(tacVu model.TacVu) (model.KetQua, error
 	return model.KetQua{MaTacVu: tacVu.MaTacVu, TrangThai: trangThai}, nil
 }
 
-func (uc *KiemTraTrungGian) ThucThi(duongDanFileTrungGian string) ([]model.KetQuaTrungGian, error) {
-	danhSachTrungGian, err := uc.boDoc.ReadProxies(duongDanFileTrungGian)
+func (uc *KiemTraProxy) ThucThi(duongDanFileProxy string) ([]model.KetQuaProxy, error) {
+	danhSachProxy, err := uc.boDoc.ReadProxies(duongDanFileProxy)
 	if err != nil {
 		uc.boGhiNhatKy.Errorf("Không đọc được danh sách proxy: %v", err)
 		return nil, err
 	}
 
 	uc.nhomXuLy.BatDau()
-	ketQua := make([]model.KetQuaTrungGian, 0, len(danhSachTrungGian))
-	kenhKetQuaTrungGian := make(chan model.KetQuaTrungGian, len(danhSachTrungGian))
+	ketQua := make([]model.KetQuaProxy, 0, len(danhSachProxy))
+	kenhKetQuaProxy := make(chan model.KetQuaProxy, len(danhSachProxy))
 
-	for _, p := range danhSachTrungGian {
+	for _, p := range danhSachProxy {
 		tacVu := model.TacVu{
 			MaTacVu: fmt.Sprintf("%s://%s:%s", p.GiaoDien, p.DiaChi, p.Cong),
 			DuLieu:  p.GiaoDien,
 		}
 		uc.nhomXuLy.NopTacVu(tacVu)
 
-		go func(trungGian model.TrungGian) {
+		go func(proxy model.Proxy) {
 			ketQuaTacVu := <-uc.nhomXuLy.KetQua()
-			ketQuaDon := model.KetQuaTrungGian{TrungGian: trungGian, TrangThai: ketQuaTacVu.TrangThai, LoiXayRa: ketQuaTacVu.LoiXayRa}
+			ketQuaDon := model.KetQuaProxy{Proxy: proxy, TrangThai: ketQuaTacVu.TrangThai, LoiXayRa: ketQuaTacVu.LoiXayRa}
 			if ketQuaTacVu.TrangThai == "Thành công" {
-				if diaChi, _, err := uc.boKiemTra.CheckProxy(trungGian, uc.duongDanKiemTra); err == nil {
+				if diaChi, _, err := uc.boKiemTra.CheckProxy(proxy, uc.duongDanKiemTra); err == nil {
 					ketQuaDon.DiaChi = diaChi
 				} else {
 					ketQuaDon.DiaChi = "Lấy IP thất bại"
@@ -87,12 +87,12 @@ func (uc *KiemTraTrungGian) ThucThi(duongDanFileTrungGian string) ([]model.KetQu
 			} else {
 				ketQuaDon.DiaChi = "Gửi tác vụ thất bại"
 			}
-			kenhKetQuaTrungGian <- ketQuaDon
+			kenhKetQuaProxy <- ketQuaDon
 		}(p)
 	}
 
-	for i := 0; i < len(danhSachTrungGian); i++ {
-		ketQua = append(ketQua, <-kenhKetQuaTrungGian)
+	for i := 0; i < len(danhSachProxy); i++ {
+		ketQua = append(ketQua, <-kenhKetQuaProxy)
 	}
 
 	uc.nhomXuLy.Dung()
@@ -111,7 +111,7 @@ func (uc *KiemTraTrungGian) ThucThi(duongDanFileTrungGian string) ([]model.KetQu
 			trangThai += " (" + r.LoiXayRa + ")"
 		}
 		fmt.Fprintf(tep, "Proxy: %s://%s:%s, IP: %s, Trạng thái: %s\n",
-			r.TrungGian.GiaoDien, r.TrungGian.DiaChi, r.TrungGian.Cong, r.DiaChi, trangThai)
+			r.Proxy.GiaoDien, r.Proxy.DiaChi, r.Proxy.Cong, r.DiaChi, trangThai)
 	}
 
 	uc.boGhiNhatKy.Infof("Kết quả đã được lưu vào %s", duongDanFileKetQua)

@@ -7,7 +7,7 @@ import (
 
 // Reader defines the interface for reading proxies.
 type Reader interface {
-	ReadProxies(nguon string) ([]model.TrungGian, error)
+	ReadProxies(nguon string) ([]model.Proxy, error)
 }
 
 // ProxyReader is the adapter for reading proxies.
@@ -23,12 +23,12 @@ func NewProxyReader(boGhiNhatKy *utils.Logger, boDoc Reader) *ProxyReader {
 	}
 }
 
-func (r *ProxyReader) ReadProxies(nguon string) ([]model.TrungGian, error) {
-	danhSachTrungGian, err := r.boDoc.ReadProxies(nguon)
+func (r *ProxyReader) ReadProxies(nguon string) ([]model.Proxy, error) {
+	danhSachProxy, err := r.boDoc.ReadProxies(nguon)
 	if err != nil {
 		r.boGhiNhatKy.Errorf("Không thể đọc danh sách proxy từ %s: %v", nguon, err)
 		return nil, err
 	}
-	r.boGhiNhatKy.Infof("Đã đọc %d proxy từ %s", len(danhSachTrungGian), nguon)
-	return danhSachTrungGian, nil
+	r.boGhiNhatKy.Infof("Đã đọc %d proxy từ %s", len(danhSachProxy), nguon)
+	return danhSachProxy, nil
 }

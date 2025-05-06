@@ -10,7 +10,7 @@ import (
 type TUIRenderer interface {
 	Start() error
 	AddTaskResult(ketQua model.KetQua)
-	AddProxyResult(ketQua model.KetQuaTrungGian)
+	AddProxyResult(ketQua model.KetQuaProxy)
 	Close()
 }
 
@@ -64,7 +64,7 @@ func (uc *TUIUseCase) AddTaskResult(ketQua model.KetQua) {
 }
 
 // AddProxyResult thêm kết quả proxy
-func (uc *TUIUseCase) AddProxyResult(ketQua model.KetQuaTrungGian) {
+func (uc *TUIUseCase) AddProxyResult(ketQua model.KetQuaProxy) {
 	if uc.boHienThi != nil {
 		uc.boHienThi.AddProxyResult(ketQua)
 	}

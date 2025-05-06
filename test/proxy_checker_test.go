@@ -8,7 +8,7 @@ import (
 // TestProxyChecker kiểm tra bộ kiểm tra proxy
 func TestProxyChecker(t *testing.T) {
 	// Khai báo và sử dụng proxy model
-	_ = model.TrungGian{
+	_ = model.Proxy{
 		GiaoDien: "http",
 		DiaChi:   "192.168.1.1",
 		Cong:     "8080",
@@ -21,7 +21,7 @@ func TestProxyChecker(t *testing.T) {
 // TestProxyCheckerWithInvalidProxy kiểm tra với proxy không hợp lệ
 func TestProxyCheckerWithInvalidProxy(t *testing.T) {
 	// Khai báo và sử dụng proxy model không hợp lệ
-	_ = model.TrungGian{
+	_ = model.Proxy{
 		GiaoDien: "invalid",
 		DiaChi:   "",
 		Cong:     "",

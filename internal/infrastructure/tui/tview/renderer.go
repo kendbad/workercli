@@ -69,7 +69,7 @@ func (r *TViewRenderer) AddTaskResult(ketQua model.KetQua) {
 	}
 }
 
-func (r *TViewRenderer) AddProxyResult(ketQua model.KetQuaTrungGian) {
+func (r *TViewRenderer) AddProxyResult(ketQua model.KetQuaProxy) {
 	// Không được sử dụng trong renderer này
 }
 

@@ -17,16 +17,16 @@ func NewIPChecker(boGhiNhatKy *utils.Logger, loaiKetNoi string) *BoKiemTraIP {
 	return &BoKiemTraIP{boGhiNhatKy: boGhiNhatKy, boKiemTraIP: boKiemTraIP}
 }
 
-func (c *BoKiemTraIP) KiemTraTrungGian(trungGian model.TrungGian, duongDanKiemTra string) (diaChi string, trangThai string, err error) {
-	diaChi, maKetQua, err := c.boKiemTraIP.CheckIP(trungGian, duongDanKiemTra)
+func (c *BoKiemTraIP) KiemTraProxy(proxy model.Proxy, duongDanKiemTra string) (diaChi string, trangThai string, err error) {
+	diaChi, maKetQua, err := c.boKiemTraIP.CheckIP(proxy, duongDanKiemTra)
 	if err != nil {
-		c.boGhiNhatKy.Errorf("Proxy %s://%s:%s thất bại: %v", trungGian.GiaoDien, trungGian.DiaChi, trungGian.Cong, err)
+		c.boGhiNhatKy.Errorf("Proxy %s://%s:%s thất bại: %v", proxy.GiaoDien, proxy.DiaChi, proxy.Cong, err)
 		return "", fmt.Sprintf("Thất bại (%v)", err), err
 	}
 
 	if maKetQua != 200 {
 		err = fmt.Errorf("mã trạng thái: %d", maKetQua)
-		c.boGhiNhatKy.Errorf("Proxy %s://%s:%s trả về mã trạng thái: %d", trungGian.GiaoDien, trungGian.DiaChi, trungGian.Cong, maKetQua)
+		c.boGhiNhatKy.Errorf("Proxy %s://%s:%s trả về mã trạng thái: %d", proxy.GiaoDien, proxy.DiaChi, proxy.Cong, maKetQua)
 		return "", fmt.Sprintf("Thất bại (mã trạng thái: %d)", maKetQua), err
 	}
 

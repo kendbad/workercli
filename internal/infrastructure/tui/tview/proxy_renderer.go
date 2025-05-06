@@ -13,16 +13,16 @@ import (
 // TViewProxyRenderer for ProxyCheck
 type TViewProxyRenderer struct {
 	boGhiNhatKy    *utils.Logger
-	ketQua         *[]model.KetQuaTrungGian
+	ketQua         *[]model.KetQuaProxy
 	khoaKetQua     *sync.Mutex
-	kenhKetQua     chan model.KetQuaTrungGian
+	kenhKetQua     chan model.KetQuaProxy
 	kenhDong       chan struct{}
 	bangHienThi    *tview.Table
 	ungDungHienThi *tview.Application
 }
 
 // NewTViewProxyRenderer creates a new TViewProxyRenderer
-func NewTViewProxyRenderer(boGhiNhatKy *utils.Logger, ketQua *[]model.KetQuaTrungGian, khoaKetQua *sync.Mutex, kenhKetQua chan model.KetQuaTrungGian, kenhDong chan struct{}) *TViewProxyRenderer {
+func NewTViewProxyRenderer(boGhiNhatKy *utils.Logger, ketQua *[]model.KetQuaProxy, khoaKetQua *sync.Mutex, kenhKetQua chan model.KetQuaProxy, kenhDong chan struct{}) *TViewProxyRenderer {
 	return &TViewProxyRenderer{
 		boGhiNhatKy: boGhiNhatKy,
 		ketQua:      ketQua,
@@ -72,7 +72,7 @@ func (r *TViewProxyRenderer) AddTaskResult(ketQua model.KetQua) {
 	// Không được sử dụng trong renderer này
 }
 
-func (r *TViewProxyRenderer) AddProxyResult(ketQua model.KetQuaTrungGian) {
+func (r *TViewProxyRenderer) AddProxyResult(ketQua model.KetQuaProxy) {
 	select {
 	case r.kenhKetQua <- ketQua:
 		r.boGhiNhatKy.Infof("Đã thêm kết quả proxy vào kênh: %v", ketQua)

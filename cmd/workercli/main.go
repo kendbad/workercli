@@ -8,27 +8,27 @@ import (
 	"sync"
 	"syscall"
 
-	// Adapter layer
+	// Tầng Adapter
 	"workercli/internal/adapter/input"
 	proxyiface "workercli/internal/adapter/proxy"
 
-	// Config & Domain layers
+	// Tầng Cấu hình & Domain
 	"workercli/internal/config"
 	"workercli/internal/domain/model"
 
-	// Infrastructure layer
+	// Tầng Cơ sở hạ tầng
 	"workercli/internal/infrastructure/proxy"
 	"workercli/internal/infrastructure/task"
 	tuiinfra "workercli/internal/infrastructure/tui"
 
-	// Usecase layer
+	// Tầng Trường hợp sử dụng usecase
 	"workercli/internal/usecase"
 
-	// Utilities
+	// Tiện ích
 	"workercli/pkg/utils"
 )
 
-// Application represents the fully configured application
+// Application đại diện cho ứng dụng đã được cấu hình đầy đủ
 type Application struct {
 	config      *config.Config
 	logger      *utils.Logger
@@ -36,15 +36,15 @@ type Application struct {
 	stopChannel chan struct{}
 }
 
-// NewApplication creates and configures the application
+// NewApplication tạo và cấu hình ứng dụng
 func NewApplication(configDir string) (*Application, error) {
-	// 1. Load configuration
+	// 1. Tải cấu hình
 	cfg, err := config.Load(configDir)
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. Initialize logger
+	// 2. Khởi tạo logger
 	logger, err := utils.NewLogger("configs/logger.yaml")
 	if err != nil {
 		return nil, err
@@ -59,33 +59,33 @@ func NewApplication(configDir string) (*Application, error) {
 	return app, nil
 }
 
-// thietLapKiemTraTrungGian creates and configures all the components needed for proxy checking
-func (app *Application) thietLapKiemTraTrungGian(loaiKetNoi, kieuGiaoDien string) (*usecase.KiemTraTrungGian, error) {
-	// Setup proxy infrastructure
+// thietLapKiemTraProxy tạo và cấu hình tất cả các thành phần cần thiết cho việc kiểm tra proxy
+func (app *Application) thietLapKiemTraProxy(loaiKetNoi, kieuGiaoDien string) (*usecase.KiemTraProxy, error) {
+	// Thiết lập cơ sở hạ tầng proxy
 	boDocTep := proxy.NewFileReader(app.logger)
-	boDocTrungGian := proxyiface.NewProxyReader(app.logger, boDocTep)
+	boDocProxy := proxyiface.NewProxyReader(app.logger, boDocTep)
 
-	// Create IP checker via proxy implementation that implements the Checker interface
+	// Tạo bộ kiểm tra IP qua proxy triển khai giao diện Checker
 	boKiemTraIP := proxy.NewIPChecker(app.logger, loaiKetNoi)
-	boKiemTraTrungGian := proxyiface.NewProxyChecker(app.logger, boKiemTraIP)
+	boKiemTraProxy := proxyiface.NewProxyChecker(app.logger, boKiemTraIP)
 
-	// Create proxy check usecase
-	boKiemTra := usecase.TaoBoKiemTraTrungGian(
-		boDocTrungGian,
-		boKiemTraTrungGian,
+	// Tạo usecase kiểm tra proxy
+	boKiemTra := usecase.TaoBoKiemTraProxy(
+		boDocProxy,
+		boKiemTraProxy,
 		app.config.Proxy.CheckURL,
 		app.config.Worker.Workers,
 		app.logger,
 	)
 
-	// Setup TUI if needed
+	// Thiết lập TUI nếu cần
 	if kieuGiaoDien != "" {
 		nhaXuongGiaoDien := tuiinfra.NewRendererFactory(app.logger, kieuGiaoDien)
 		boHienThi := nhaXuongGiaoDien.CreateProxyRenderer(
 			app.logger,
-			&[]model.KetQuaTrungGian{},
+			&[]model.KetQuaProxy{},
 			&sync.Mutex{},
-			make(chan model.KetQuaTrungGian, 100),
+			make(chan model.KetQuaProxy, 100),
 			app.stopChannel,
 		)
 		app.tuiUseCase = tuiinfra.NewTUIUseCase(app.logger, kieuGiaoDien, boHienThi)
@@ -94,13 +94,13 @@ func (app *Application) thietLapKiemTraTrungGian(loaiKetNoi, kieuGiaoDien string
 	return boKiemTra, nil
 }
 
-// thietLapXuLyTacVu creates and configures all the components needed for task processing
+// thietLapXuLyTacVu tạo và cấu hình tất cả các thành phần cần thiết cho việc xử lý tác vụ
 func (app *Application) thietLapXuLyTacVu(kieuGiaoDien string) (*usecase.XuLyLoDongTacVu, error) {
-	// Task infrastructure
+	// Cơ sở hạ tầng tác vụ
 	boXuLy := task.NewProcessor(app.logger)
 	boDocDauVao := input.NewFileReader(app.logger)
 
-	// Create batch task usecase
+	// Tạo usecase xử lý tác vụ hàng loạt
 	boXuLyLoDong := usecase.TaoBoXuLyLoDongTacVu(
 		boDocDauVao,
 		boXuLy,
@@ -108,7 +108,7 @@ func (app *Application) thietLapXuLyTacVu(kieuGiaoDien string) (*usecase.XuLyLoD
 		app.logger,
 	)
 
-	// Setup TUI if needed
+	// Thiết lập TUI nếu cần
 	if kieuGiaoDien != "" {
 		nhaXuongGiaoDien := tuiinfra.NewRendererFactory(app.logger, kieuGiaoDien)
 		boHienThi := nhaXuongGiaoDien.CreateTaskRenderer(
@@ -124,14 +124,14 @@ func (app *Application) thietLapXuLyTacVu(kieuGiaoDien string) (*usecase.XuLyLoD
 	return boXuLyLoDong, nil
 }
 
-// ThucThiKiemTraTrungGian performs the proxy checking workflow
-func (app *Application) ThucThiKiemTraTrungGian(loaiKetNoi, kieuGiaoDien string) error {
-	boKiemTra, err := app.thietLapKiemTraTrungGian(loaiKetNoi, kieuGiaoDien)
+// ThucThiKiemTraProxy thực hiện quy trình kiểm tra proxy
+func (app *Application) ThucThiKiemTraProxy(loaiKetNoi, kieuGiaoDien string) error {
+	boKiemTra, err := app.thietLapKiemTraProxy(loaiKetNoi, kieuGiaoDien)
 	if err != nil {
 		return err
 	}
 
-	// Create log file for TUI mode
+	// Tạo tệp log cho chế độ TUI
 	if kieuGiaoDien != "" {
 		tepGhiNhatKy, err := utils.CreateLogFile()
 		if err != nil {
@@ -140,7 +140,7 @@ func (app *Application) ThucThiKiemTraTrungGian(loaiKetNoi, kieuGiaoDien string)
 		defer tepGhiNhatKy.Close()
 		app.logger.SetOutput(tepGhiNhatKy)
 
-		// Start TUI
+		// Khởi động TUI
 		if err := app.tuiUseCase.Start(); err != nil {
 			app.logger.Errorf("Không thể khởi động TUI: %v", err)
 			return err
@@ -148,14 +148,14 @@ func (app *Application) ThucThiKiemTraTrungGian(loaiKetNoi, kieuGiaoDien string)
 		defer app.tuiUseCase.Close()
 	}
 
-	// Execute the proxy check usecase
+	// Thực thi usecase kiểm tra proxy
 	ketQua, err := boKiemTra.ThucThi(app.config.Proxy.FilePath)
 	if err != nil {
 		app.logger.Errorf("Lỗi kiểm tra proxy: %v", err)
 		return err
 	}
 
-	// Display or send results
+	// Hiển thị hoặc gửi kết quả
 	if kieuGiaoDien != "" {
 		for _, kq := range ketQua {
 			app.logger.Infof("Gửi kết quả proxy vào TUI: %v", kq)
@@ -168,7 +168,7 @@ func (app *Application) ThucThiKiemTraTrungGian(loaiKetNoi, kieuGiaoDien string)
 				trangThai += " (" + kq.LoiXayRa + ")"
 			}
 			log.Printf("Proxy %s://%s:%s, IP: %s, Trạng thái: %s\n",
-				kq.TrungGian.GiaoDien, kq.TrungGian.DiaChi, kq.TrungGian.Cong, kq.DiaChi, trangThai)
+				kq.Proxy.GiaoDien, kq.Proxy.DiaChi, kq.Proxy.Cong, kq.DiaChi, trangThai)
 		}
 	}
 
@@ -176,14 +176,14 @@ func (app *Application) ThucThiKiemTraTrungGian(loaiKetNoi, kieuGiaoDien string)
 	return nil
 }
 
-// ThucThiXuLyTacVu performs the task processing workflow
+// ThucThiXuLyTacVu thực hiện quy trình xử lý tác vụ
 func (app *Application) ThucThiXuLyTacVu(kieuGiaoDien string) error {
 	boXuLyLoDong, err := app.thietLapXuLyTacVu(kieuGiaoDien)
 	if err != nil {
 		return err
 	}
 
-	// Create log file for TUI mode
+	// Tạo tệp log cho chế độ TUI
 	if kieuGiaoDien != "" {
 		tepGhiNhatKy, err := utils.CreateLogFile()
 		if err != nil {
@@ -192,7 +192,7 @@ func (app *Application) ThucThiXuLyTacVu(kieuGiaoDien string) error {
 		defer tepGhiNhatKy.Close()
 		app.logger.SetOutput(tepGhiNhatKy)
 
-		// Start TUI
+		// Khởi động TUI
 		if err := app.tuiUseCase.Start(); err != nil {
 			app.logger.Errorf("Không thể khởi động TUI: %v", err)
 			return err
@@ -200,14 +200,14 @@ func (app *Application) ThucThiXuLyTacVu(kieuGiaoDien string) error {
 		defer app.tuiUseCase.Close()
 	}
 
-	// Execute the task processing usecase
+	// Thực thi usecase xử lý tác vụ
 	ketQua, err := boXuLyLoDong.ThucThi(app.config.Input.FilePath)
 	if err != nil {
 		app.logger.Errorf("Lỗi xử lý các tác vụ: %v", err)
 		return err
 	}
 
-	// Display or send results
+	// Hiển thị hoặc gửi kết quả
 	if kieuGiaoDien != "" {
 		for _, kq := range ketQua {
 			app.logger.Infof("Gửi kết quả tác vụ vào TUI: %v", kq)
@@ -223,7 +223,7 @@ func (app *Application) ThucThiXuLyTacVu(kieuGiaoDien string) error {
 	return nil
 }
 
-// DungUngDung gracefully shuts down the application
+// DungUngDung đóng ứng dụng một cách an toàn
 func (app *Application) DungUngDung() {
 	app.logger.Info("Đang dừng ứng dụng...")
 	if app.tuiUseCase != nil {
@@ -233,14 +233,14 @@ func (app *Application) DungUngDung() {
 }
 
 func main() {
-	// Parse command line flags
+	// Phân tích cờ dòng lệnh
 	kieuGiaoDien := flag.String("tui", "", "Loại TUI: tview, bubbletea, termui")
 	kiemTraProxy := flag.Bool("proxy", false, "Kiểm tra proxy từ tệp proxy.txt")
 	xuLyTacVu := flag.Bool("task", false, "Xử lý tác vụ từ tệp tasks.txt")
 	loaiKetNoi := flag.String("client", "nethttp", "Loại HTTP client: fasthttp, nethttp")
 	flag.Parse()
 
-	// Create application
+	// Tạo ứng dụng
 	app, err := NewApplication("configs/")
 	if err != nil {
 		log.Fatalf("Không thể khởi tạo ứng dụng: %v", err)
@@ -248,26 +248,28 @@ func main() {
 
 	app.logger.Info("Ứng dụng WorkerCLI đang khởi động")
 
-	// Setup signal handling for graceful shutdown
-	kenhTinHieu := make(chan os.Signal, 1)
-	signal.Notify(kenhTinHieu, os.Interrupt, syscall.SIGTERM)
+	// Thiết lập xử lý tín hiệu để tắt ứng dụng một cách an toàn
+	tatDauHieu := make(chan os.Signal, 1)
+	signal.Notify(tatDauHieu, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
-		<-kenhTinHieu
+		sig := <-tatDauHieu
+		app.logger.Infof("Nhận tín hiệu: %v", sig)
 		app.DungUngDung()
 		os.Exit(0)
 	}()
 
-	// Execute workflows based on flags
+	// Thực thi quy trình dựa trên cờ
 	if *kiemTraProxy {
-		if err := app.ThucThiKiemTraTrungGian(*loaiKetNoi, *kieuGiaoDien); err != nil {
-			log.Fatalf("Kiểm tra proxy thất bại: %v", err)
+		if err := app.ThucThiKiemTraProxy(*loaiKetNoi, *kieuGiaoDien); err != nil {
+			app.logger.Errorf("Lỗi khi kiểm tra proxy: %v", err)
 		}
 	} else if *xuLyTacVu {
 		if err := app.ThucThiXuLyTacVu(*kieuGiaoDien); err != nil {
-			log.Fatalf("Xử lý tác vụ thất bại: %v", err)
+			app.logger.Errorf("Lỗi khi xử lý tác vụ: %v", err)
 		}
 	} else {
-		app.logger.Info("Không có tùy chọn nào được chọn (-proxy, -task)")
-		log.Println("Không có tùy chọn nào được chọn. Sử dụng -proxy để kiểm tra proxy hoặc -task để xử lý tác vụ.")
+		log.Println("Vui lòng chỉ định -proxy hoặc -task")
 	}
+
+	app.DungUngDung()
 }

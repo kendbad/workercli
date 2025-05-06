@@ -6,6 +6,6 @@ import "workercli/internal/domain/model"
 type Renderer interface {
 	Start() error
 	AddTaskResult(ketQua model.KetQua)
-	AddProxyResult(ketQua model.KetQuaTrungGian)
+	AddProxyResult(ketQua model.KetQuaProxy)
 	Close()
 }
