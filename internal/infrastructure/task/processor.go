@@ -6,22 +6,22 @@ import (
 	"workercli/pkg/utils"
 )
 
-type Processor struct {
-	logger *utils.Logger
+type BoXuLy struct {
+	boGhiNhatKy *utils.Logger
 }
 
-func NewProcessor(logger *utils.Logger) *Processor {
-	return &Processor{logger: logger}
+func NewProcessor(boGhiNhatKy *utils.Logger) *BoXuLy {
+	return &BoXuLy{boGhiNhatKy: boGhiNhatKy}
 }
 
-func (p *Processor) ProcessTask(task model.Task) (model.Result, error) {
-	p.logger.Debugf("Xử lý task %s với dữ liệu: %s", task.ID, task.Data)
+func (p *BoXuLy) XuLyTacVu(tacVu model.TacVu) (model.KetQua, error) {
+	p.boGhiNhatKy.Debugf("Xử lý tác vụ %s với dữ liệu: %s", tacVu.MaTacVu, tacVu.DuLieu)
 	time.Sleep(10 * time.Millisecond) // Giả lập xử lý nhanh
-	result := model.Result{
-		TaskID:  task.ID,
-		Status:  "success",
-		Details: "Task hoàn thành: " + task.Data,
+	ketQua := model.KetQua{
+		MaTacVu:   tacVu.MaTacVu,
+		TrangThai: "Thành công",
+		ChiTiet:   "Tác vụ hoàn thành: " + tacVu.DuLieu,
 	}
-	p.logger.Infof("Kết quả task %s: %s", task.ID, result.Status)
-	return result, nil
+	p.boGhiNhatKy.Infof("Kết quả tác vụ %s: %s", tacVu.MaTacVu, ketQua.TrangThai)
+	return ketQua, nil
 }

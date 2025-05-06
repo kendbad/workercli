@@ -15,14 +15,14 @@ import (
 )
 
 type NetHTTPClient struct {
-	logger *utils.Logger
+	boGhiNhatKy *utils.Logger
 }
 
-func NewNetHTTPClient(logger *utils.Logger) *NetHTTPClient {
-	return &NetHTTPClient{logger: logger}
+func NewNetHTTPClient(boGhiNhatKy *utils.Logger) *NetHTTPClient {
+	return &NetHTTPClient{boGhiNhatKy: boGhiNhatKy}
 }
 
-func (c *NetHTTPClient) DoRequest(proxy model.Proxy, urlStr string) ([]byte, int, error) {
+func (c *NetHTTPClient) DoRequest(trungGian model.TrungGian, duongDan string) ([]byte, int, error) {
 	// Tạo http.Transport với cấu hình chung
 	transport := &http.Transport{
 		DialContext: (&net.Dialer{
@@ -36,30 +36,30 @@ func (c *NetHTTPClient) DoRequest(proxy model.Proxy, urlStr string) ([]byte, int
 	}
 
 	// Xử lý proxy dựa trên giao thức
-	proxyAddr := fmt.Sprintf("%s:%s", proxy.IP, proxy.Port)
-	switch proxy.Protocol {
+	diaChiTrungGian := fmt.Sprintf("%s:%s", trungGian.DiaChi, trungGian.Cong)
+	switch trungGian.GiaoDien {
 	case "http", "https":
-		proxyURL, err := url.Parse(fmt.Sprintf("%s://%s", proxy.Protocol, proxyAddr))
+		proxyURL, err := url.Parse(fmt.Sprintf("%s://%s", trungGian.GiaoDien, diaChiTrungGian))
 		if err != nil {
-			c.logger.Errorf("Invalid proxy URL %s: %v", proxyAddr, err)
-			return nil, 0, fmt.Errorf("invalid proxy URL: %v", err)
+			c.boGhiNhatKy.Errorf("URL proxy không hợp lệ %s: %v", diaChiTrungGian, err)
+			return nil, 0, fmt.Errorf("URL proxy không hợp lệ: %v", err)
 		}
 		transport.Proxy = http.ProxyURL(proxyURL)
 	case "socks5":
-		dialer, err := goproxy.SOCKS5("tcp", proxyAddr, nil, &net.Dialer{
+		dialer, err := goproxy.SOCKS5("tcp", diaChiTrungGian, nil, &net.Dialer{
 			Timeout:   5 * time.Second,
 			KeepAlive: 30 * time.Second,
 		})
 		if err != nil {
-			c.logger.Errorf("Failed to create SOCKS5 dialer for %s: %v", proxyAddr, err)
-			return nil, 0, fmt.Errorf("failed to create SOCKS5 dialer: %v", err)
+			c.boGhiNhatKy.Errorf("Không thể tạo kết nối SOCKS5 cho %s: %v", diaChiTrungGian, err)
+			return nil, 0, fmt.Errorf("không thể tạo kết nối SOCKS5: %v", err)
 		}
 		transport.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
 			return dialer.Dial(network, addr)
 		}
 	default:
-		c.logger.Errorf("Unsupported proxy protocol: %s", proxy.Protocol)
-		return nil, 0, fmt.Errorf("unsupported proxy protocol: %s", proxy.Protocol)
+		c.boGhiNhatKy.Errorf("Giao thức proxy không được hỗ trợ: %s", trungGian.GiaoDien)
+		return nil, 0, fmt.Errorf("giao thức proxy không được hỗ trợ: %s", trungGian.GiaoDien)
 	}
 
 	// Tạo HTTP client
@@ -69,16 +69,16 @@ func (c *NetHTTPClient) DoRequest(proxy model.Proxy, urlStr string) ([]byte, int
 	}
 
 	// Tạo request
-	req, err := http.NewRequest(http.MethodGet, urlStr, nil)
+	req, err := http.NewRequest(http.MethodGet, duongDan, nil)
 	if err != nil {
-		c.logger.Errorf("Failed to create HTTP request: %v", err)
+		c.boGhiNhatKy.Errorf("Không thể tạo request HTTP: %v", err)
 		return nil, 0, err
 	}
 
 	// Gửi request
 	resp, err := client.Do(req)
 	if err != nil {
-		c.logger.Errorf("HTTP request failed: %v", err)
+		c.boGhiNhatKy.Errorf("Request HTTP thất bại: %v", err)
 		return nil, 0, err
 	}
 	defer resp.Body.Close()
@@ -86,7 +86,7 @@ func (c *NetHTTPClient) DoRequest(proxy model.Proxy, urlStr string) ([]byte, int
 	// Đọc response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		c.logger.Errorf("Failed to read response body: %v", err)
+		c.boGhiNhatKy.Errorf("Không thể đọc phản hồi: %v", err)
 		return nil, resp.StatusCode, err
 	}
 

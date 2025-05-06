@@ -9,8 +9,8 @@ import (
 // TUIRenderer định nghĩa giao diện trừu tượng cho renderer
 type TUIRenderer interface {
 	Start() error
-	AddTaskResult(result model.Result)
-	AddProxyResult(result model.ProxyResult)
+	AddTaskResult(ketQua model.KetQua)
+	AddProxyResult(ketQua model.KetQuaTrungGian)
 	Close()
 }
 
@@ -25,66 +25,66 @@ const (
 
 // TUIUseCase quản lý logic của TUI
 type TUIUseCase struct {
-	logger   *utils.Logger
-	mode     TUIMode
-	renderer TUIRenderer
-	wg       sync.WaitGroup
+	boGhiNhatKy *utils.Logger
+	kieuHienThi TUIMode
+	boHienThi   TUIRenderer
+	nhomCho     sync.WaitGroup
 }
 
 // NewTUIUseCase khởi tạo TUIUseCase
-func NewTUIUseCase(logger *utils.Logger, mode string, renderer TUIRenderer) *TUIUseCase {
+func NewTUIUseCase(boGhiNhatKy *utils.Logger, kieuHienThi string, boHienThi TUIRenderer) *TUIUseCase {
 	return &TUIUseCase{
-		logger:   logger,
-		mode:     validateMode(mode),
-		renderer: renderer,
+		boGhiNhatKy: boGhiNhatKy,
+		kieuHienThi: validateMode(kieuHienThi),
+		boHienThi:   boHienThi,
 	}
 }
 
 // Start khởi động TUI
 func (uc *TUIUseCase) Start() error {
-	if uc.renderer == nil {
+	if uc.boHienThi == nil {
 		return nil
 	}
-	uc.wg.Add(1)
+	uc.nhomCho.Add(1)
 	go func() {
-		defer uc.wg.Done()
-		uc.logger.Info("Starting TUI")
-		if err := uc.renderer.Start(); err != nil {
-			uc.logger.Errorf("Failed to start TUI: %v", err)
+		defer uc.nhomCho.Done()
+		uc.boGhiNhatKy.Info("Đang khởi động TUI")
+		if err := uc.boHienThi.Start(); err != nil {
+			uc.boGhiNhatKy.Errorf("Không thể khởi động TUI: %v", err)
 		}
 	}()
 	return nil
 }
 
 // AddTaskResult thêm kết quả task
-func (uc *TUIUseCase) AddTaskResult(result model.Result) {
-	if uc.renderer != nil {
-		uc.renderer.AddTaskResult(result)
+func (uc *TUIUseCase) AddTaskResult(ketQua model.KetQua) {
+	if uc.boHienThi != nil {
+		uc.boHienThi.AddTaskResult(ketQua)
 	}
 }
 
 // AddProxyResult thêm kết quả proxy
-func (uc *TUIUseCase) AddProxyResult(result model.ProxyResult) {
-	if uc.renderer != nil {
-		uc.renderer.AddProxyResult(result)
+func (uc *TUIUseCase) AddProxyResult(ketQua model.KetQuaTrungGian) {
+	if uc.boHienThi != nil {
+		uc.boHienThi.AddProxyResult(ketQua)
 	}
 }
 
 // Close đóng TUI
 func (uc *TUIUseCase) Close() {
-	uc.wg.Wait()
+	uc.nhomCho.Wait()
 
-	if uc.renderer != nil {
-		uc.logger.Info("Closing TUI")
-		uc.renderer.Close()
+	if uc.boHienThi != nil {
+		uc.boGhiNhatKy.Info("Đang đóng TUI")
+		uc.boHienThi.Close()
 	}
 }
 
 // validateTUIMode xác thực TUIMode
-func validateMode(mode string) TUIMode {
-	switch mode {
+func validateMode(kieuHienThi string) TUIMode {
+	switch kieuHienThi {
 	case string(TUIModeTView), string(TUIModeBubbleTea):
-		return TUIMode(mode)
+		return TUIMode(kieuHienThi)
 	default:
 		return TUIModeTView
 	}

@@ -14,10 +14,10 @@ var (
 )
 
 // RenderTaskTable renders the table for task results
-func RenderTaskTable(results *[]model.Result, selectedRow int) string {
+func RenderTaskTable(ketQua *[]model.KetQua, selectedRow int) string {
 	var buf strings.Builder
 
-	header := []string{"Task ID", "Status"}
+	header := []string{"Mã tác vụ", "Trạng thái"}
 	headerWidths := []int{12, 20}
 	headerRow := make([]string, len(header))
 	for i, h := range header {
@@ -26,8 +26,8 @@ func RenderTaskTable(results *[]model.Result, selectedRow int) string {
 	buf.WriteString(headerStyle.Render(strings.Join(headerRow, "|")))
 	buf.WriteString("\n")
 
-	for i, res := range *results {
-		row := []string{res.TaskID, res.Status}
+	for i, kq := range *ketQua {
+		row := []string{kq.MaTacVu, kq.TrangThai}
 		formattedRow := make([]string, len(row))
 		for j, cell := range row {
 			formattedRow[j] = lipgloss.NewStyle().Width(headerWidths[j]).Render(cell)
@@ -45,10 +45,10 @@ func RenderTaskTable(results *[]model.Result, selectedRow int) string {
 }
 
 // RenderProxyTable renders the table for proxy results
-func RenderProxyTable(results *[]model.ProxyResult, selectedRow int) string {
+func RenderProxyTable(ketQua *[]model.KetQuaTrungGian, selectedRow int) string {
 	var buf strings.Builder
 
-	header := []string{"Protocol", "IP", "Port", "Resolved IP", "Status", "Error"}
+	header := []string{"Giao thức", "Địa chỉ IP", "Cổng", "IP đã phân giải", "Trạng thái", "Lỗi"}
 	headerWidths := []int{10, 15, 8, 15, 10, 20}
 	headerRow := make([]string, len(header))
 	for i, h := range header {
@@ -57,14 +57,14 @@ func RenderProxyTable(results *[]model.ProxyResult, selectedRow int) string {
 	buf.WriteString(headerStyle.Render(strings.Join(headerRow, "|")))
 	buf.WriteString("\n")
 
-	for i, res := range *results {
+	for i, kq := range *ketQua {
 		row := []string{
-			res.Proxy.Protocol,
-			res.Proxy.IP,
-			res.Proxy.Port,
-			res.IP,
-			res.Status,
-			res.Error,
+			kq.TrungGian.GiaoDien,
+			kq.TrungGian.DiaChi,
+			kq.TrungGian.Cong,
+			kq.DiaChi,
+			kq.TrangThai,
+			kq.LoiXayRa,
 		}
 		formattedRow := make([]string, len(row))
 		for j, cell := range row {

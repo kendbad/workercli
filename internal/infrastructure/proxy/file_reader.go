@@ -8,41 +8,41 @@ import (
 )
 
 type FileReader struct {
-	logger *utils.Logger
+	boGhiNhatKy *utils.Logger
 }
 
-func NewFileReader(logger *utils.Logger) *FileReader {
-	return &FileReader{logger: logger}
+func NewFileReader(boGhiNhatKy *utils.Logger) *FileReader {
+	return &FileReader{boGhiNhatKy: boGhiNhatKy}
 }
 
-func (r *FileReader) ReadProxies(filePath string) ([]model.Proxy, error) {
-	filePath = utils.AutoPath(filePath)
-	file, err := os.Open(filePath)
+func (r *FileReader) ReadProxies(duongDanTep string) ([]model.TrungGian, error) {
+	duongDanTep = utils.AutoPath(duongDanTep)
+	tep, err := os.Open(duongDanTep)
 	if err != nil {
-		r.logger.Errorf("Không thể mở file proxy %s: %v", filePath, err)
+		r.boGhiNhatKy.Errorf("Không thể mở file proxy %s: %v", duongDanTep, err)
 		return nil, err
 	}
-	defer file.Close()
+	defer tep.Close()
 
-	var proxies []model.Proxy
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if line == "" {
+	var danhSachTrungGian []model.TrungGian
+	danhSach := bufio.NewScanner(tep)
+	for danhSach.Scan() {
+		dong := danhSach.Text()
+		if dong == "" {
 			continue
 		}
-		proxy, err := ParseProxy(line)
+		trungGian, err := ParseProxy(dong)
 		if err != nil {
-			r.logger.Warnf("Bỏ qua proxy không hợp lệ %s: %v", line, err)
+			r.boGhiNhatKy.Warnf("Bỏ qua proxy không hợp lệ %s: %v", dong, err)
 			continue
 		}
-		proxies = append(proxies, proxy)
+		danhSachTrungGian = append(danhSachTrungGian, trungGian)
 	}
 
-	if err := scanner.Err(); err != nil {
-		r.logger.Errorf("Lỗi khi đọc file proxy %s: %v", filePath, err)
+	if err := danhSach.Err(); err != nil {
+		r.boGhiNhatKy.Errorf("Lỗi khi đọc file proxy %s: %v", duongDanTep, err)
 		return nil, err
 	}
 
-	return proxies, nil
+	return danhSachTrungGian, nil
 }

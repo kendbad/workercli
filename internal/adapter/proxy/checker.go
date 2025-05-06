@@ -5,30 +5,30 @@ import (
 	"workercli/pkg/utils"
 )
 
-// Checker defines the interface for checking proxies.
-type Checker interface {
-	CheckProxy(proxy model.Proxy, checkURL string) (ip string, status string, err error)
+// BoKiemTra defines the interface for checking proxies.
+type BoKiemTra interface {
+	KiemTraTrungGian(trungGian model.TrungGian, duongDanKiemTra string) (diaChi string, trangThai string, err error)
 }
 
 // ProxyChecker is the adapter for checking proxies.
 type ProxyChecker struct {
-	logger  *utils.Logger
-	checker Checker // Specific implementation (e.g., IP checker)
+	boGhiNhatKy *utils.Logger
+	boKiemTra   BoKiemTra // Specific implementation (e.g., IP checker)
 }
 
-func NewProxyChecker(logger *utils.Logger, checker Checker) *ProxyChecker {
+func NewProxyChecker(boGhiNhatKy *utils.Logger, boKiemTra BoKiemTra) *ProxyChecker {
 	return &ProxyChecker{
-		logger:  logger,
-		checker: checker,
+		boGhiNhatKy: boGhiNhatKy,
+		boKiemTra:   boKiemTra,
 	}
 }
 
-func (c *ProxyChecker) CheckProxy(proxy model.Proxy, checkURL string) (ip string, status string, err error) {
-	ip, status, err = c.checker.CheckProxy(proxy, checkURL)
+func (c *ProxyChecker) CheckProxy(trungGian model.TrungGian, duongDanKiemTra string) (diaChi string, trangThai string, err error) {
+	diaChi, trangThai, err = c.boKiemTra.KiemTraTrungGian(trungGian, duongDanKiemTra)
 	if err != nil {
-		c.logger.Errorf("Proxy check failed %s://%s:%s: %v", proxy.Protocol, proxy.IP, proxy.Port, err)
-		return "", status, err
+		c.boGhiNhatKy.Errorf("Kiểm tra proxy thất bại %s://%s:%s: %v", trungGian.GiaoDien, trungGian.DiaChi, trungGian.Cong, err)
+		return "", trangThai, err
 	}
-	c.logger.Infof("Proxy %s://%s:%s returned IP: %s", proxy.Protocol, proxy.IP, proxy.Port, ip)
-	return ip, status, nil
+	c.boGhiNhatKy.Infof("Proxy %s://%s:%s trả về IP: %s", trungGian.GiaoDien, trungGian.DiaChi, trungGian.Cong, diaChi)
+	return diaChi, trangThai, nil
 }

@@ -9,42 +9,42 @@ import (
 )
 
 type Reader interface {
-	ReadTasks(filePath string) ([]model.Task, error)
+	ReadTasks(duongDanTep string) ([]model.TacVu, error)
 }
 
 type FileReader struct {
-	logger *utils.Logger
+	boGhiNhatKy *utils.Logger
 }
 
-func NewFileReader(logger *utils.Logger) *FileReader {
-	return &FileReader{logger: logger}
+func NewFileReader(boGhiNhatKy *utils.Logger) *FileReader {
+	return &FileReader{boGhiNhatKy: boGhiNhatKy}
 }
 
-func (r *FileReader) ReadTasks(filePath string) ([]model.Task, error) {
-	filePath = utils.AutoPath(filePath)
-	r.logger.Debugf("Đọc file đầu vào: %s", filePath)
-	file, err := os.Open(filePath)
+func (r *FileReader) ReadTasks(duongDanTep string) ([]model.TacVu, error) {
+	duongDanTep = utils.AutoPath(duongDanTep)
+	r.boGhiNhatKy.Debugf("Đọc file đầu vào: %s", duongDanTep)
+	tep, err := os.Open(duongDanTep)
 	if err != nil {
-		r.logger.Errorf("Lỗi mở file %s: %v", filePath, err)
+		r.boGhiNhatKy.Errorf("Lỗi mở file %s: %v", duongDanTep, err)
 		return nil, err
 	}
-	defer file.Close()
+	defer tep.Close()
 
-	var tasks []model.Task
-	scanner := bufio.NewScanner(file)
+	var danhSachTacVu []model.TacVu
+	scanner := bufio.NewScanner(tep)
 	for i := 1; scanner.Scan(); i++ {
-		line := scanner.Text()
-		tasks = append(tasks, model.Task{
-			ID:   "task-" + strconv.Itoa(i),
-			Data: line,
+		dong := scanner.Text()
+		danhSachTacVu = append(danhSachTacVu, model.TacVu{
+			MaTacVu: "task-" + strconv.Itoa(i),
+			DuLieu:  dong,
 		})
 	}
 
 	if err := scanner.Err(); err != nil {
-		r.logger.Errorf("Lỗi đọc file %s: %v", filePath, err)
+		r.boGhiNhatKy.Errorf("Lỗi đọc file %s: %v", duongDanTep, err)
 		return nil, err
 	}
 
-	r.logger.Infof("Đọc được %d task từ file", len(tasks))
-	return tasks, nil
+	r.boGhiNhatKy.Infof("Đọc được %d task từ file", len(danhSachTacVu))
+	return danhSachTacVu, nil
 }

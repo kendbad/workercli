@@ -8,18 +8,18 @@ import (
 
 // HTTPClient defines the interface for sending HTTP requests.
 type HTTPClient interface {
-	DoRequest(proxy model.Proxy, url string) ([]byte, int, error)
+	DoRequest(trungGian model.TrungGian, duongDan string) ([]byte, int, error)
 }
 
 // Factory creates an HTTPClient based on the client type.
-func NewHTTPClient(clientType string, logger *utils.Logger) HTTPClient {
-	switch clientType {
+func NewHTTPClient(loaiKetNoi string, boGhiNhatKy *utils.Logger) HTTPClient {
+	switch loaiKetNoi {
 	case "fasthttp":
-		return httpclient.NewFastHTTPClient(logger)
+		return httpclient.NewFastHTTPClient(boGhiNhatKy)
 	case "nethttp":
-		return httpclient.NewNetHTTPClient(logger)
+		return httpclient.NewNetHTTPClient(boGhiNhatKy)
 	default:
-		logger.Warnf("Unknown client type %s, falling back to fasthttp", clientType)
-		return httpclient.NewFastHTTPClient(logger)
+		boGhiNhatKy.Warnf("Loại client không xác định %s, sử dụng fasthttp", loaiKetNoi)
+		return httpclient.NewFastHTTPClient(boGhiNhatKy)
 	}
 }

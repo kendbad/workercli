@@ -12,25 +12,25 @@ import (
 )
 
 type FastHTTPClient struct {
-	logger *utils.Logger
+	boGhiNhatKy *utils.Logger
 }
 
-func NewFastHTTPClient(logger *utils.Logger) *FastHTTPClient {
-	return &FastHTTPClient{logger: logger}
+func NewFastHTTPClient(boGhiNhatKy *utils.Logger) *FastHTTPClient {
+	return &FastHTTPClient{boGhiNhatKy: boGhiNhatKy}
 }
 
-func (c *FastHTTPClient) DoRequest(proxy model.Proxy, url string) ([]byte, int, error) {
+func (c *FastHTTPClient) DoRequest(trungGian model.TrungGian, duongDan string) ([]byte, int, error) {
 	client := &fasthttp.Client{
 		Dial: func(addr string) (conn net.Conn, err error) {
-			switch proxy.Protocol {
+			switch trungGian.GiaoDien {
 			case "http", "https":
-				dialer := fasthttpproxy.FasthttpHTTPDialer(fmt.Sprintf("%s:%s", proxy.IP, proxy.Port))
+				dialer := fasthttpproxy.FasthttpHTTPDialer(fmt.Sprintf("%s:%s", trungGian.DiaChi, trungGian.Cong))
 				conn, err = dialer(addr)
 			case "socks5":
-				dialer := fasthttpproxy.FasthttpSocksDialer(fmt.Sprintf("%s:%s", proxy.IP, proxy.Port))
+				dialer := fasthttpproxy.FasthttpSocksDialer(fmt.Sprintf("%s:%s", trungGian.DiaChi, trungGian.Cong))
 				conn, err = dialer(addr)
 			default:
-				err = fmt.Errorf("giao thức không được hỗ trợ: %s", proxy.Protocol)
+				err = fmt.Errorf("giao thức không được hỗ trợ: %s", trungGian.GiaoDien)
 			}
 			return conn, err
 		},
@@ -43,7 +43,7 @@ func (c *FastHTTPClient) DoRequest(proxy model.Proxy, url string) ([]byte, int, 
 
 	req := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(req)
-	req.SetRequestURI(url)
+	req.SetRequestURI(duongDan)
 	req.Header.SetMethod(fasthttp.MethodGet)
 
 	resp := fasthttp.AcquireResponse()

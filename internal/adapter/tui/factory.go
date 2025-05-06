@@ -8,6 +8,6 @@ import (
 
 // RendererFactory defines the interface for creating renderers
 type RendererFactory interface {
-	CreateTaskRenderer(logger *utils.Logger, results *[]model.Result, resultsMu *sync.Mutex, resultChan chan model.Result, closeChan chan struct{}) Renderer
-	CreateProxyRenderer(logger *utils.Logger, results *[]model.ProxyResult, resultsMu *sync.Mutex, resultChan chan model.ProxyResult, closeChan chan struct{}) Renderer
+	CreateTaskRenderer(boGhiNhatKy *utils.Logger, ketQua *[]model.KetQua, khoaKetQua *sync.Mutex, kenhKetQua chan model.KetQua, kenhDong chan struct{}) Renderer
+	CreateProxyRenderer(boGhiNhatKy *utils.Logger, ketQua *[]model.KetQuaTrungGian, khoaKetQua *sync.Mutex, kenhKetQua chan model.KetQuaTrungGian, kenhDong chan struct{}) Renderer
 }

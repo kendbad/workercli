@@ -9,16 +9,16 @@ import (
 
 // StatusComponent manages generic status rendering
 type StatusComponent struct {
-	logger   *utils.Logger
-	Ready    bool
-	Viewport viewport.Model
+	boGhiNhatKy *utils.Logger
+	Ready       bool
+	Viewport    viewport.Model
 }
 
 // NewStatusComponent creates a new status component
-func NewStatusComponent(logger *utils.Logger) *StatusComponent {
+func NewStatusComponent(boGhiNhatKy *utils.Logger) *StatusComponent {
 	return &StatusComponent{
-		logger: logger,
-		Ready:  false,
+		boGhiNhatKy: boGhiNhatKy,
+		Ready:       false,
 	}
 }
 
@@ -37,9 +37,9 @@ func (s *StatusComponent) UpdateViewport(width, height int, content string) {
 // View renders the status view
 func (s *StatusComponent) View() string {
 	if !s.Ready {
-		s.logger.Info("Status component not ready")
+		s.boGhiNhatKy.Info("Status component not ready")
 		return "Loading..."
 	}
-	s.logger.Infof("Rendering status viewport: %s", s.Viewport.View())
-	return s.Viewport.View() + "\nPress 'q' to quit."
+	s.boGhiNhatKy.Infof("Rendering status viewport: %s", s.Viewport.View())
+	return s.Viewport.View() + "\nNhấn 'q' để thoát."
 }

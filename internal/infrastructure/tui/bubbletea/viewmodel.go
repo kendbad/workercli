@@ -5,14 +5,14 @@ import (
 )
 
 type ViewModel struct {
-	Results []model.Result
-	Proxies []model.Proxy
+	KetQua            []model.KetQua
+	DanhSachTrungGian []model.TrungGian
 }
 
-func (vm *ViewModel) UpdateResults(results []model.Result) {
-	vm.Results = results
+func (vm *ViewModel) UpdateResults(ketQua []model.KetQua) {
+	vm.KetQua = ketQua
 }
 
-func (vm *ViewModel) UpdateProxies(proxies []model.Proxy) {
-	vm.Proxies = proxies
+func (vm *ViewModel) UpdateProxies(danhSachTrungGian []model.TrungGian) {
+	vm.DanhSachTrungGian = danhSachTrungGian
 }

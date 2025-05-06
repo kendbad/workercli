@@ -7,57 +7,57 @@ import (
 	"workercli/pkg/utils"
 )
 
-// Pool quản lý một tập hợp các worker
-type Pool struct {
-	tasks     chan model.Task
-	results   chan model.Result
-	processor service.TaskProcessor
-	workers   int
-	logger    *utils.Logger
-	stopCh    chan struct{}
-	wg        sync.WaitGroup
+// NhomXuLy quản lý một tập hợp các người xử lý
+type NhomXuLy struct {
+	danhSachTacVu  chan model.TacVu
+	danhSachKetQua chan model.KetQua
+	boXuLy         service.BoXuLyTacVu
+	soLuongXuLy    int
+	boGhiNhatKy    *utils.Logger
+	kenhDung       chan struct{}
+	nhomCho        sync.WaitGroup
 }
 
-// NewPool tạo một pool worker mới
-func NewPool(workers int, processor service.TaskProcessor, logger *utils.Logger) *Pool {
-	return &Pool{
-		tasks:     make(chan model.Task, 1000), // Queue lớn cho số lượng task lớn
-		results:   make(chan model.Result, 1000),
-		processor: processor,
-		workers:   workers,
-		logger:    logger,
-		stopCh:    make(chan struct{}),
+// TaoNhomXuLy tạo một nhóm xử lý mới
+func TaoNhomXuLy(soLuongXuLy int, boXuLy service.BoXuLyTacVu, boGhiNhatKy *utils.Logger) *NhomXuLy {
+	return &NhomXuLy{
+		danhSachTacVu:  make(chan model.TacVu, 1000), // Hàng đợi lớn cho số lượng tác vụ lớn
+		danhSachKetQua: make(chan model.KetQua, 1000),
+		boXuLy:         boXuLy,
+		soLuongXuLy:    soLuongXuLy,
+		boGhiNhatKy:    boGhiNhatKy,
+		kenhDung:       make(chan struct{}),
 	}
 }
 
-// Start khởi động tất cả worker
-func (p *Pool) Start() {
-	p.logger.Infof("Khởi động pool với %d worker", p.workers)
-	p.wg.Add(p.workers)
-	for i := 0; i < p.workers; i++ {
-		worker := NewWorker(i+1, p.tasks, p.results, p.processor, p.logger)
+// BatDau khởi động tất cả bộ xử lý
+func (p *NhomXuLy) BatDau() {
+	p.boGhiNhatKy.Infof("Khởi động nhóm với %d bộ xử lý", p.soLuongXuLy)
+	p.nhomCho.Add(p.soLuongXuLy)
+	for i := 0; i < p.soLuongXuLy; i++ {
+		nguoiXuLy := TaoNguoiXuLy(i+1, p.danhSachTacVu, p.danhSachKetQua, p.boXuLy, p.boGhiNhatKy)
 		go func() {
-			defer p.wg.Done()
-			worker.Run(p.stopCh)
+			defer p.nhomCho.Done()
+			nguoiXuLy.Chay(p.kenhDung)
 		}()
 	}
 }
 
-// Submit gửi một task vào queue
-func (p *Pool) Submit(task model.Task) {
-	p.tasks <- task
+// NopTacVu gửi một tác vụ vào hàng đợi
+func (p *NhomXuLy) NopTacVu(tacVu model.TacVu) {
+	p.danhSachTacVu <- tacVu
 }
 
-// Results trả về channel kết quả
-func (p *Pool) Results() <-chan model.Result {
-	return p.results
+// KetQua trả về kênh kết quả
+func (p *NhomXuLy) KetQua() <-chan model.KetQua {
+	return p.danhSachKetQua
 }
 
-// Stop dừng tất cả worker
-func (p *Pool) Stop() {
-	p.logger.Info("Dừng pool worker")
-	close(p.stopCh)
-	close(p.tasks)
-	p.wg.Wait()
-	close(p.results)
+// Dung dừng tất cả bộ xử lý
+func (p *NhomXuLy) Dung() {
+	p.boGhiNhatKy.Info("Dừng nhóm xử lý")
+	close(p.kenhDung)
+	close(p.danhSachTacVu)
+	p.nhomCho.Wait()
+	close(p.danhSachKetQua)
 }

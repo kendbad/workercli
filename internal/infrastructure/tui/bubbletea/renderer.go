@@ -13,12 +13,12 @@ import (
 
 // BubbleTeaRenderer for BatchTask
 type BubbleTeaRenderer struct {
-	logger     *utils.Logger
-	results    *[]model.Result
-	resultsMu  *sync.Mutex
-	resultChan chan model.Result
-	closeChan  chan struct{}
-	teaProgram *tea.Program
+	boGhiNhatKy *utils.Logger
+	ketQua      *[]model.KetQua
+	khoaKetQua  *sync.Mutex
+	kenhKetQua  chan model.KetQua
+	kenhDong    chan struct{}
+	teaProgram  *tea.Program
 }
 
 // RendererModel holds the state for the BubbleTea task renderer
@@ -28,15 +28,15 @@ type RendererModel struct {
 	selectedRow int
 }
 
-// ResultMsg represents a task result message
-type ResultMsg struct {
-	Result model.Result
+// KetQuaMsg represents a task result message
+type KetQuaMsg struct {
+	KetQua model.KetQua
 }
 
 func NewRendererModel(renderer *BubbleTeaRenderer) RendererModel {
 	return RendererModel{
 		renderer:    renderer,
-		status:      components.NewStatusComponent(renderer.logger),
+		status:      components.NewStatusComponent(renderer.boGhiNhatKy),
 		selectedRow: 0,
 	}
 }
@@ -61,35 +61,35 @@ func (m RendererModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q", "ctrl+c":
 			return m, tea.Quit
 		case "up":
-			m.renderer.resultsMu.Lock()
+			m.renderer.khoaKetQua.Lock()
 			if m.selectedRow > 0 {
 				m.selectedRow--
 			}
-			m.renderer.resultsMu.Unlock()
+			m.renderer.khoaKetQua.Unlock()
 			m.ensureSelectedRowVisible()
-			m.status.Viewport.SetContent(components.RenderTaskTable(m.renderer.results, m.selectedRow))
+			m.status.Viewport.SetContent(components.RenderTaskTable(m.renderer.ketQua, m.selectedRow))
 		case "down":
-			m.renderer.resultsMu.Lock()
-			if m.selectedRow < len(*m.renderer.results)-1 {
+			m.renderer.khoaKetQua.Lock()
+			if m.selectedRow < len(*m.renderer.ketQua)-1 {
 				m.selectedRow++
 			}
-			m.renderer.resultsMu.Unlock()
+			m.renderer.khoaKetQua.Unlock()
 			m.ensureSelectedRowVisible()
-			m.status.Viewport.SetContent(components.RenderTaskTable(m.renderer.results, m.selectedRow))
+			m.status.Viewport.SetContent(components.RenderTaskTable(m.renderer.ketQua, m.selectedRow))
 		case "pgup":
 			m.status.Viewport.PageUp()
 		case "pgdown":
 			m.status.Viewport.PageDown()
 		}
 	case tea.WindowSizeMsg:
-		m.status.UpdateViewport(msg.Width, msg.Height, components.RenderTaskTable(m.renderer.results, m.selectedRow))
-	case ResultMsg:
-		m.renderer.resultsMu.Lock()
-		*m.renderer.results = append(*m.renderer.results, msg.Result)
-		m.renderer.resultsMu.Unlock()
+		m.status.UpdateViewport(msg.Width, msg.Height, components.RenderTaskTable(m.renderer.ketQua, m.selectedRow))
+	case KetQuaMsg:
+		m.renderer.khoaKetQua.Lock()
+		*m.renderer.ketQua = append(*m.renderer.ketQua, msg.KetQua)
+		m.renderer.khoaKetQua.Unlock()
 		if m.status.Ready {
-			tableContent := components.RenderTaskTable(m.renderer.results, m.selectedRow)
-			m.renderer.logger.Infof("Bubbletea updated table: %s", tableContent)
+			tableContent := components.RenderTaskTable(m.renderer.ketQua, m.selectedRow)
+			m.renderer.boGhiNhatKy.Infof("Bubbletea updated table: %s", tableContent)
 			m.status.Viewport.SetContent(tableContent)
 		}
 	}
@@ -101,13 +101,13 @@ func (m RendererModel) View() string {
 }
 
 // NewBubbleTeaRenderer creates a new BubbleTeaRenderer
-func NewBubbleTeaRenderer(logger *utils.Logger, results *[]model.Result, resultsMu *sync.Mutex, resultChan chan model.Result, closeChan chan struct{}) *BubbleTeaRenderer {
+func NewBubbleTeaRenderer(boGhiNhatKy *utils.Logger, ketQua *[]model.KetQua, khoaKetQua *sync.Mutex, kenhKetQua chan model.KetQua, kenhDong chan struct{}) *BubbleTeaRenderer {
 	return &BubbleTeaRenderer{
-		logger:     logger,
-		results:    results,
-		resultsMu:  resultsMu,
-		resultChan: resultChan,
-		closeChan:  closeChan,
+		boGhiNhatKy: boGhiNhatKy,
+		ketQua:      ketQua,
+		khoaKetQua:  khoaKetQua,
+		kenhKetQua:  kenhKetQua,
+		kenhDong:    kenhDong,
 	}
 }
 
@@ -116,33 +116,33 @@ func (r *BubbleTeaRenderer) Start() error {
 	go func() {
 		for {
 			select {
-			case result := <-r.resultChan:
-				r.logger.Infof("Bubbletea sending task result: %v", result)
-				r.teaProgram.Send(ResultMsg{Result: result})
-			case <-r.closeChan:
-				r.logger.Info("Bubbletea closing task renderer")
+			case ketQua := <-r.kenhKetQua:
+				r.boGhiNhatKy.Infof("Bubbletea sending task result: %v", ketQua)
+				r.teaProgram.Send(KetQuaMsg{KetQua: ketQua})
+			case <-r.kenhDong:
+				r.boGhiNhatKy.Info("Bubbletea closing task renderer")
 				r.teaProgram.Quit()
 				return
 			}
 		}
 	}()
 	if _, err := r.teaProgram.Run(); err != nil {
-		r.logger.Errorf("Failed to start bubbletea: %v", err)
+		r.boGhiNhatKy.Errorf("Failed to start bubbletea: %v", err)
 		return fmt.Errorf("could not start bubbletea: %w", err)
 	}
 	return nil
 }
 
-func (r *BubbleTeaRenderer) AddTaskResult(result model.Result) {
+func (r *BubbleTeaRenderer) AddTaskResult(ketQua model.KetQua) {
 	select {
-	case r.resultChan <- result:
-		r.logger.Infof("Added task result to channel: %v", result)
-	case <-r.closeChan:
-		r.logger.Info("Task channel closed, ignoring result")
+	case r.kenhKetQua <- ketQua:
+		r.boGhiNhatKy.Infof("Added task result to channel: %v", ketQua)
+	case <-r.kenhDong:
+		r.boGhiNhatKy.Info("Task channel closed, ignoring result")
 	}
 }
 
-func (r *BubbleTeaRenderer) AddProxyResult(result model.ProxyResult) {
+func (r *BubbleTeaRenderer) AddProxyResult(ketQua model.KetQuaTrungGian) {
 	// Not used in this renderer
 }
 

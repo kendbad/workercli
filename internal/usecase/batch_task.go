@@ -11,49 +11,49 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type BatchTaskUseCase struct {
-	inputReader input.Reader
-	processor   service.TaskProcessor
-	workerPool  *worker.Pool
-	logger      *utils.Logger
+type XuLyLoDongTacVu struct {
+	boDocDuLieuVao input.Reader
+	boXuLy         service.BoXuLyTacVu
+	nhomXuLy       *worker.NhomXuLy
+	boGhiNhatKy    *utils.Logger
 }
 
-func NewBatchTaskUseCase(reader input.Reader, processor service.TaskProcessor, workers int, logger *utils.Logger) *BatchTaskUseCase {
-	pool := worker.NewPool(workers, processor, logger)
-	return &BatchTaskUseCase{
-		inputReader: reader,
-		processor:   processor,
-		workerPool:  pool,
-		logger:      logger,
+func TaoBoXuLyLoDongTacVu(boDocDuLieuVao input.Reader, boXuLy service.BoXuLyTacVu, soLuongXuLy int, boGhiNhatKy *utils.Logger) *XuLyLoDongTacVu {
+	nhomXuLy := worker.TaoNhomXuLy(soLuongXuLy, boXuLy, boGhiNhatKy)
+	return &XuLyLoDongTacVu{
+		boDocDuLieuVao: boDocDuLieuVao,
+		boXuLy:         boXuLy,
+		nhomXuLy:       nhomXuLy,
+		boGhiNhatKy:    boGhiNhatKy,
 	}
 }
 
-func (uc *BatchTaskUseCase) Execute(inputFile string) ([]model.Result, error) {
-	uc.logger.Info(fmt.Sprintf("Bắt đầu xử lý file đầu vào: %s", inputFile))
+func (uc *XuLyLoDongTacVu) ThucThi(duongDanFileVao string) ([]model.KetQua, error) {
+	uc.boGhiNhatKy.Info(fmt.Sprintf("Bắt đầu xử lý file đầu vào: %s", duongDanFileVao))
 
-	tasks, err := uc.inputReader.ReadTasks(inputFile)
+	danhSachTacVu, err := uc.boDocDuLieuVao.ReadTasks(duongDanFileVao)
 	if err != nil {
-		uc.logger.Errorf("Lỗi đọc file đầu vào: %v", err)
+		uc.boGhiNhatKy.Errorf("Lỗi đọc file đầu vào: %v", err)
 		return nil, err
 	}
 
-	uc.workerPool.Start()
-	for _, task := range tasks {
-		uc.workerPool.Submit(task)
+	uc.nhomXuLy.BatDau()
+	for _, tacVu := range danhSachTacVu {
+		uc.nhomXuLy.NopTacVu(tacVu)
 	}
 
-	results := make([]model.Result, 0, len(tasks))
-	for i := 0; i < len(tasks); i++ {
-		result := <-uc.workerPool.Results()
-		results = append(results, result)
+	ketQua := make([]model.KetQua, 0, len(danhSachTacVu))
+	for i := 0; i < len(danhSachTacVu); i++ {
+		ketQuaDon := <-uc.nhomXuLy.KetQua()
+		ketQua = append(ketQua, ketQuaDon)
 	}
 
-	uc.workerPool.Stop()
+	uc.nhomXuLy.Dung()
 
-	uc.logger.WithFields(logrus.Fields{
-		"inputFile": inputFile,
-		"taskCount": len(results),
-	}).Info("Hoàn thành xử lý task")
+	uc.boGhiNhatKy.WithFields(logrus.Fields{
+		"duongDanFileVao": duongDanFileVao,
+		"soLuongTacVu":    len(ketQua),
+	}).Info("Hoàn thành xử lý tác vụ")
 
-	return results, nil
+	return ketQua, nil
 }

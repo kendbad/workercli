@@ -10,34 +10,34 @@ import (
 )
 
 type APIChecker struct {
-	client httpclient.HTTPClient
-	logger *utils.Logger
+	ketNoi      httpclient.HTTPClient
+	boGhiNhatKy *utils.Logger
 }
 
-func NewAPIChecker(clientType string, logger *utils.Logger) *APIChecker {
-	client := httpclient.NewHTTPClient(clientType, logger)
-	return &APIChecker{client: client, logger: logger}
+func NewAPIChecker(loaiKetNoi string, boGhiNhatKy *utils.Logger) *APIChecker {
+	ketNoi := httpclient.NewHTTPClient(loaiKetNoi, boGhiNhatKy)
+	return &APIChecker{ketNoi: ketNoi, boGhiNhatKy: boGhiNhatKy}
 }
 
-func (c *APIChecker) CheckIP(proxy model.Proxy, checkURL string) (string, int, error) {
-	// Đảm bảo checkURL là URL hợp lệ
-	if !strings.HasPrefix(checkURL, "http://") && !strings.HasPrefix(checkURL, "https://") {
-		checkURL = "http://" + checkURL
+func (c *APIChecker) CheckIP(trungGian model.TrungGian, duongDanKiemTra string) (string, int, error) {
+	// Đảm bảo duongDanKiemTra là URL hợp lệ
+	if !strings.HasPrefix(duongDanKiemTra, "http://") && !strings.HasPrefix(duongDanKiemTra, "https://") {
+		duongDanKiemTra = "http://" + duongDanKiemTra
 	}
 
-	body, statusCode, err := c.client.DoRequest(proxy, checkURL)
+	noiDung, maKetQua, err := c.ketNoi.DoRequest(trungGian, duongDanKiemTra)
 	if err != nil {
-		c.logger.Errorf("IP check failed for proxy %s://%s:%s: %v", proxy.Protocol, proxy.IP, proxy.Port, err)
-		return "", statusCode, err
+		c.boGhiNhatKy.Errorf("Kiểm tra IP thất bại cho proxy %s://%s:%s: %v", trungGian.GiaoDien, trungGian.DiaChi, trungGian.Cong, err)
+		return "", maKetQua, err
 	}
 
-	var ipResp struct {
+	var ketQuaIP struct {
 		IP string `json:"ip"`
 	}
-	if err := json.Unmarshal(body, &ipResp); err != nil {
-		c.logger.Errorf("Failed to decode JSON response: %v", err)
-		return "", statusCode, fmt.Errorf("Không thể giải mã JSON: %v", err)
+	if err := json.Unmarshal(noiDung, &ketQuaIP); err != nil {
+		c.boGhiNhatKy.Errorf("Không thể giải mã phản hồi JSON: %v", err)
+		return "", maKetQua, fmt.Errorf("Không thể giải mã JSON: %v", err)
 	}
 
-	return ipResp.IP, statusCode, nil
+	return ketQuaIP.IP, maKetQua, nil
 }

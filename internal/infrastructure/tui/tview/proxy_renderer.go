@@ -12,75 +12,75 @@ import (
 
 // TViewProxyRenderer for ProxyCheck
 type TViewProxyRenderer struct {
-	logger     *utils.Logger
-	results    *[]model.ProxyResult
-	resultsMu  *sync.Mutex
-	resultChan chan model.ProxyResult
-	closeChan  chan struct{}
-	tviewTable *tview.Table
-	tviewApp   *tview.Application
+	boGhiNhatKy    *utils.Logger
+	ketQua         *[]model.KetQuaTrungGian
+	khoaKetQua     *sync.Mutex
+	kenhKetQua     chan model.KetQuaTrungGian
+	kenhDong       chan struct{}
+	bangHienThi    *tview.Table
+	ungDungHienThi *tview.Application
 }
 
 // NewTViewProxyRenderer creates a new TViewProxyRenderer
-func NewTViewProxyRenderer(logger *utils.Logger, results *[]model.ProxyResult, resultsMu *sync.Mutex, resultChan chan model.ProxyResult, closeChan chan struct{}) *TViewProxyRenderer {
+func NewTViewProxyRenderer(boGhiNhatKy *utils.Logger, ketQua *[]model.KetQuaTrungGian, khoaKetQua *sync.Mutex, kenhKetQua chan model.KetQuaTrungGian, kenhDong chan struct{}) *TViewProxyRenderer {
 	return &TViewProxyRenderer{
-		logger:     logger,
-		results:    results,
-		resultsMu:  resultsMu,
-		resultChan: resultChan,
-		closeChan:  closeChan,
+		boGhiNhatKy: boGhiNhatKy,
+		ketQua:      ketQua,
+		khoaKetQua:  khoaKetQua,
+		kenhKetQua:  kenhKetQua,
+		kenhDong:    kenhDong,
 	}
 }
 
 func (r *TViewProxyRenderer) Start() error {
-	r.tviewApp = tview.NewApplication()
-	r.tviewTable = tview.NewTable().SetBorders(true).SetFixed(1, 0).SetSelectable(true, false)
+	r.ungDungHienThi = tview.NewApplication()
+	r.bangHienThi = tview.NewTable().SetBorders(true).SetFixed(1, 0).SetSelectable(true, false)
 
-	r.tviewApp.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	r.ungDungHienThi.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == 'q' {
-			r.tviewApp.Stop()
+			r.ungDungHienThi.Stop()
 		}
 		return event
 	})
 
 	go func() {
-		row := 1
+		hang := 1
 		for {
 			select {
-			case result := <-r.resultChan:
-				r.resultsMu.Lock()
-				*r.results = append(*r.results, result)
-				components.RenderProxyTable(r.tviewTable, r.results, row)
-				row++
-				r.resultsMu.Unlock()
-				r.tviewApp.QueueUpdateDraw(func() {})
-			case <-r.closeChan:
-				r.tviewApp.QueueUpdateDraw(func() {})
+			case ketQuaDon := <-r.kenhKetQua:
+				r.khoaKetQua.Lock()
+				*r.ketQua = append(*r.ketQua, ketQuaDon)
+				components.RenderProxyTable(r.bangHienThi, r.ketQua, hang)
+				hang++
+				r.khoaKetQua.Unlock()
+				r.ungDungHienThi.QueueUpdateDraw(func() {})
+			case <-r.kenhDong:
+				r.ungDungHienThi.QueueUpdateDraw(func() {})
 				return
 			}
 		}
 	}()
 
-	if err := r.tviewApp.SetRoot(r.tviewTable, true).Run(); err != nil {
-		r.logger.Errorf("Failed to start tview: %v", err)
+	if err := r.ungDungHienThi.SetRoot(r.bangHienThi, true).Run(); err != nil {
+		r.boGhiNhatKy.Errorf("Không thể khởi động tview: %v", err)
 		return err
 	}
 	return nil
 }
 
-func (r *TViewProxyRenderer) AddTaskResult(result model.Result) {
-	// Not used in this renderer
+func (r *TViewProxyRenderer) AddTaskResult(ketQua model.KetQua) {
+	// Không được sử dụng trong renderer này
 }
 
-func (r *TViewProxyRenderer) AddProxyResult(result model.ProxyResult) {
+func (r *TViewProxyRenderer) AddProxyResult(ketQua model.KetQuaTrungGian) {
 	select {
-	case r.resultChan <- result:
-		r.logger.Infof("Added proxy result to channel: %v", result)
-	case <-r.closeChan:
-		r.logger.Info("Proxy channel closed, ignoring proxy result")
+	case r.kenhKetQua <- ketQua:
+		r.boGhiNhatKy.Infof("Đã thêm kết quả proxy vào kênh: %v", ketQua)
+	case <-r.kenhDong:
+		r.boGhiNhatKy.Info("Kênh proxy đã đóng, bỏ qua kết quả proxy")
 	}
 }
 
 func (r *TViewProxyRenderer) Close() {
-	// Closing is handled in usecase
+	// Đóng được xử lý trong usecase
 }

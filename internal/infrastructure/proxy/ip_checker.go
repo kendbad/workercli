@@ -7,28 +7,28 @@ import (
 	"workercli/pkg/utils"
 )
 
-type IPChecker struct {
-	logger    *utils.Logger
-	ipChecker ipchecker.IPChecker
+type BoKiemTraIP struct {
+	boGhiNhatKy *utils.Logger
+	boKiemTraIP ipchecker.IPChecker
 }
 
-func NewIPChecker(logger *utils.Logger, clientType string) *IPChecker {
-	ipChecker := ipchecker.NewIPChecker(clientType, logger)
-	return &IPChecker{logger: logger, ipChecker: ipChecker}
+func NewIPChecker(boGhiNhatKy *utils.Logger, loaiKetNoi string) *BoKiemTraIP {
+	boKiemTraIP := ipchecker.NewIPChecker(loaiKetNoi, boGhiNhatKy)
+	return &BoKiemTraIP{boGhiNhatKy: boGhiNhatKy, boKiemTraIP: boKiemTraIP}
 }
 
-func (c *IPChecker) CheckProxy(proxy model.Proxy, checkURL string) (ip string, status string, err error) {
-	ip, statusCode, err := c.ipChecker.CheckIP(proxy, checkURL)
+func (c *BoKiemTraIP) KiemTraTrungGian(trungGian model.TrungGian, duongDanKiemTra string) (diaChi string, trangThai string, err error) {
+	diaChi, maKetQua, err := c.boKiemTraIP.CheckIP(trungGian, duongDanKiemTra)
 	if err != nil {
-		c.logger.Errorf("Proxy %s://%s:%s failed: %v", proxy.Protocol, proxy.IP, proxy.Port, err)
-		return "", fmt.Sprintf("Failed (%v)", err), err
+		c.boGhiNhatKy.Errorf("Proxy %s://%s:%s thất bại: %v", trungGian.GiaoDien, trungGian.DiaChi, trungGian.Cong, err)
+		return "", fmt.Sprintf("Thất bại (%v)", err), err
 	}
 
-	if statusCode != 200 {
-		err = fmt.Errorf("mã trạng thái: %d", statusCode)
-		c.logger.Errorf("Proxy %s://%s:%s returned status: %d", proxy.Protocol, proxy.IP, proxy.Port, statusCode)
-		return "", fmt.Sprintf("Failed (status: %d)", statusCode), err
+	if maKetQua != 200 {
+		err = fmt.Errorf("mã trạng thái: %d", maKetQua)
+		c.boGhiNhatKy.Errorf("Proxy %s://%s:%s trả về mã trạng thái: %d", trungGian.GiaoDien, trungGian.DiaChi, trungGian.Cong, maKetQua)
+		return "", fmt.Sprintf("Thất bại (mã trạng thái: %d)", maKetQua), err
 	}
 
-	return ip, "Success", nil
+	return diaChi, "Thành công", nil
 }

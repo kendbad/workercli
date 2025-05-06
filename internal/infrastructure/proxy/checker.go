@@ -8,28 +8,28 @@ import (
 )
 
 type Checker struct {
-	logger    *utils.Logger
-	ipChecker *IPChecker
+	boGhiNhatKy *utils.Logger
+	boKiemTraIP *BoKiemTraIP
 }
 
-func NewChecker(logger *utils.Logger, clientType string) *Checker {
-	ipChecker := NewIPChecker(logger, clientType)
-	return &Checker{logger: logger, ipChecker: ipChecker}
+func NewChecker(boGhiNhatKy *utils.Logger, loaiKetNoi string) *Checker {
+	boKiemTraIP := NewIPChecker(boGhiNhatKy, loaiKetNoi)
+	return &Checker{boGhiNhatKy: boGhiNhatKy, boKiemTraIP: boKiemTraIP}
 }
 
-func (c *Checker) CheckProxy(proxy model.Proxy, checkURL string) (ip string, status string, err error) {
-	ip, statusCode, err := c.ipChecker.ipChecker.CheckIP(proxy, checkURL)
+func (c *Checker) CheckProxy(trungGian model.TrungGian, duongDanKiemTra string) (diaChi string, trangThai string, err error) {
+	diaChi, trangThaiKetQua, err := c.boKiemTraIP.KiemTraTrungGian(trungGian, duongDanKiemTra)
 	if err != nil {
-		c.logger.Errorf("Proxy %s://%s:%s failed: %v", proxy.Protocol, proxy.IP, proxy.Port, err)
-		return "", fmt.Sprintf("Failed (%v)", err), err
+		c.boGhiNhatKy.Errorf("Proxy %s://%s:%s thất bại: %v", trungGian.GiaoDien, trungGian.DiaChi, trungGian.Cong, err)
+		return "", fmt.Sprintf("Thất bại (%v)", err), err
 	}
 
-	if statusCode != 200 {
-		err = fmt.Errorf("mã trạng thái: %d", statusCode)
-		c.logger.Errorf("Proxy %s://%s:%s returned status: %d", proxy.Protocol, proxy.IP, proxy.Port, statusCode)
-		return "", fmt.Sprintf("Failed (status: %d)", statusCode), err
+	// Kiểm tra nếu trangThaiKetQua là "Thành công" thì trả về kết quả thành công
+	if trangThaiKetQua != "Thành công" {
+		c.boGhiNhatKy.Errorf("Proxy %s://%s:%s trả về trạng thái: %s", trungGian.GiaoDien, trungGian.DiaChi, trungGian.Cong, trangThaiKetQua)
+		return "", trangThaiKetQua, fmt.Errorf("kiểm tra proxy không thành công: %s", trangThaiKetQua)
 	}
 
-	c.logger.Infof("Proxy %s://%s:%s returned IP: %s", proxy.Protocol, proxy.IP, proxy.Port, ip)
-	return ip, "Success", nil
+	c.boGhiNhatKy.Infof("Proxy %s://%s:%s trả về IP: %s", trungGian.GiaoDien, trungGian.DiaChi, trungGian.Cong, diaChi)
+	return diaChi, "Thành công", nil
 }

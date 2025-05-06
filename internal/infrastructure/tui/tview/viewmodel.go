@@ -5,38 +5,38 @@ import (
 )
 
 type ViewModel struct {
-	Results []model.Result
-	Proxies []model.Proxy
+	KetQua            []model.KetQua
+	DanhSachTrungGian []model.TrungGian
 }
 
-func (vm *ViewModel) UpdateResults(results []model.Result) {
-	vm.Results = results
+func (vm *ViewModel) UpdateResults(ketQua []model.KetQua) {
+	vm.KetQua = ketQua
 }
 
-func (vm *ViewModel) UpdateProxies(proxies []model.Proxy) {
-	vm.Proxies = proxies
+func (vm *ViewModel) UpdateProxies(danhSachTrungGian []model.TrungGian) {
+	vm.DanhSachTrungGian = danhSachTrungGian
 }
 
-func (vm *ViewModel) GetResults() []model.Result {
-	return vm.Results
+func (vm *ViewModel) GetResults() []model.KetQua {
+	return vm.KetQua
 }
 
-func (vm *ViewModel) GetProxies() []model.Proxy {
-	return vm.Proxies
+func (vm *ViewModel) GetProxies() []model.TrungGian {
+	return vm.DanhSachTrungGian
 }
 
-func (vm *ViewModel) GetResult(index int) model.Result {
-	return vm.Results[index]
+func (vm *ViewModel) GetResult(index int) model.KetQua {
+	return vm.KetQua[index]
 }
 
-func (vm *ViewModel) GetProxy(index int) model.Proxy {
-	return vm.Proxies[index]
+func (vm *ViewModel) GetProxy(index int) model.TrungGian {
+	return vm.DanhSachTrungGian[index]
 }
 
 func (vm *ViewModel) GetResultCount() int {
-	return len(vm.Results)
+	return len(vm.KetQua)
 }
 
 func (vm *ViewModel) GetProxyCount() int {
-	return len(vm.Proxies)
+	return len(vm.DanhSachTrungGian)
 }

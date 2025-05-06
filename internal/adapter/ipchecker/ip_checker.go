@@ -8,23 +8,23 @@ import (
 
 // IPChecker defines the interface for checking IP through a proxy.
 type IPChecker interface {
-	CheckIP(proxy model.Proxy, checkURL string) (string, int, error)
+	CheckIP(trungGian model.TrungGian, duongDanKiemTra string) (string, int, error)
 }
 
 // IPCheckerAdapter is the adapter for IP checking.
 type IPCheckerAdapter struct {
-	logger  *utils.Logger
-	checker IPChecker // Specific implementation (e.g., API checker)
+	boGhiNhatKy *utils.Logger
+	boKiemTra   IPChecker // Specific implementation (e.g., API checker)
 }
 
-func NewIPChecker(clientType string, logger *utils.Logger) *IPCheckerAdapter {
-	checker := ipchecker.NewAPIChecker(clientType, logger)
+func NewIPChecker(loaiKetNoi string, boGhiNhatKy *utils.Logger) *IPCheckerAdapter {
+	boKiemTra := ipchecker.NewAPIChecker(loaiKetNoi, boGhiNhatKy)
 	return &IPCheckerAdapter{
-		logger:  logger,
-		checker: checker,
+		boGhiNhatKy: boGhiNhatKy,
+		boKiemTra:   boKiemTra,
 	}
 }
 
-func (c *IPCheckerAdapter) CheckIP(proxy model.Proxy, checkURL string) (string, int, error) {
-	return c.checker.CheckIP(proxy, checkURL)
+func (c *IPCheckerAdapter) CheckIP(trungGian model.TrungGian, duongDanKiemTra string) (string, int, error) {
+	return c.boKiemTra.CheckIP(trungGian, duongDanKiemTra)
 }
