@@ -11,37 +11,44 @@ import (
 	"workercli/pkg/utils"
 )
 
+// ParseProxyFunc là biến hàm cho phép inject dependency và mock trong test
+// Clean Architecture: Dependency Rule - Tầng ngoài phụ thuộc vào tầng trong
+var ParseProxyFunc = proxi.ParseProxy
+
 // KiemTraProxy là usecase để kiểm tra danh sách proxy.
 // Trong Clean Architecture, usecase chứa logic nghiệp vụ cụ thể
 // và điều phối các thành phần khác để thực hiện một trường hợp sử dụng.
+// Usecase nằm ở tầng trong, không phụ thuộc vào infrastructure hay adapter
 type KiemTraProxy struct {
-	boDoc           *proxy.ProxyReader    // boDoc: bộ đọc proxy
-	boKiemTra       *proxy.BoKiemTraProxy // boKiemTra: bộ kiểm tra proxy
-	duongDanKiemTra string                // duongDanKiemTra: đường dẫn kiểm tra
-	nhomXuLy        *worker.NhomXuLy      // nhomXuLy: nhóm xử lý - quản lý pool worker
-	boGhiNhatKy     *utils.Logger         // boGhiNhatKy: bộ ghi nhật ký
+	BoDoc           *proxy.BoDocProxy     // boDoc: bộ đọc proxy
+	BoKiemTra       *proxy.BoKiemTraProxy // boKiemTra: bộ kiểm tra proxy
+	DuongDanKiemTra string                // duongDanKiemTra: đường dẫn kiểm tra
+	NhomXuLy        *worker.NhomXuLy      // nhomXuLy: nhóm xử lý - quản lý pool worker
+	BoGhiNhatKy     *utils.Logger         // boGhiNhatKy: bộ ghi nhật ký
 }
 
 // TaoBoKiemTraProxy tạo một usecase mới để kiểm tra proxy.
 // Áp dụng Dependency Injection để tiêm phụ thuộc qua tham số
-func TaoBoKiemTraProxy(boDoc *proxy.ProxyReader, boKiemTra *proxy.BoKiemTraProxy, duongDanKiemTra string, soLuongXuLy int, boGhiNhatKy *utils.Logger) *KiemTraProxy {
+// Clean Architecture: Factory Pattern - Tạo usecase với các dependency đã chuẩn bị
+func TaoBoKiemTraProxy(boDoc *proxy.BoDocProxy, boKiemTra *proxy.BoKiemTraProxy, duongDanKiemTra string, soLuongXuLy int, boGhiNhatKy *utils.Logger) *KiemTraProxy {
 	// Đảm bảo duongDanKiemTra có giao thức
 	if !strings.HasPrefix(duongDanKiemTra, "http://") && !strings.HasPrefix(duongDanKiemTra, "https://") {
 		duongDanKiemTra = "http://" + duongDanKiemTra
 	}
 	boXuLyProxy := &BoXuLyTacVuProxy{boKiemTra, duongDanKiemTra, boGhiNhatKy}
 	return &KiemTraProxy{
-		boDoc:           boDoc,
-		boKiemTra:       boKiemTra,
-		duongDanKiemTra: duongDanKiemTra,
-		nhomXuLy:        worker.TaoNhomXuLy(soLuongXuLy, boXuLyProxy, boGhiNhatKy),
-		boGhiNhatKy:     boGhiNhatKy,
+		BoDoc:           boDoc,
+		BoKiemTra:       boKiemTra,
+		DuongDanKiemTra: duongDanKiemTra,
+		NhomXuLy:        worker.TaoNhomXuLy(soLuongXuLy, boXuLyProxy, boGhiNhatKy),
+		BoGhiNhatKy:     boGhiNhatKy,
 	}
 }
 
 // BoXuLyTacVuProxy là một adapter nội bộ để xử lý tác vụ kiểm tra proxy.
 // Đây là một ví dụ về adapter pattern trong Clean Architecture,
 // cho phép usecase tương tác với các worker thông qua một giao diện chung.
+// Clean Architecture: Port & Adapter - BoXuLyTacVuProxy là adapter cho worker port
 type BoXuLyTacVuProxy struct {
 	boKiemTra       *proxy.BoKiemTraProxy // boKiemTra: bộ kiểm tra proxy
 	duongDanKiemTra string                // duongDanKiemTra: đường dẫn kiểm tra
@@ -50,8 +57,9 @@ type BoXuLyTacVuProxy struct {
 
 // XuLyTacVu xử lý một tác vụ kiểm tra proxy.
 // Implements giao diện worker.TaskProcessor để worker có thể gọi
+// Clean Architecture: Interface Segregation - Chỉ expose các phương thức cần thiết
 func (p *BoXuLyTacVuProxy) XuLyTacVu(tacVu model.TacVu) (model.KetQua, error) {
-	proxy, err := proxi.ParseProxy(tacVu.MaTacVu)
+	proxy, err := ParseProxyFunc(tacVu.MaTacVu)
 	if err != nil {
 		p.boGhiNhatKy.Errorf("Định dạng proxy không hợp lệ: %s", tacVu.MaTacVu)
 		return model.KetQua{MaTacVu: tacVu.MaTacVu, TrangThai: "Thất bại", LoiXayRa: err.Error()}, err
@@ -69,14 +77,15 @@ func (p *BoXuLyTacVuProxy) XuLyTacVu(tacVu model.TacVu) (model.KetQua, error) {
 
 // ThucThi thực hiện việc kiểm tra tất cả proxy từ một tệp tin.
 // Đây là phương thức chính của usecase, điều phối toàn bộ luồng xử lý
+// Clean Architecture: Use Case Interactor - Chứa business logic của ứng dụng
 func (uc *KiemTraProxy) ThucThi(duongDanFileProxy string) ([]model.KetQuaProxy, error) {
-	danhSachProxy, err := uc.boDoc.ReadProxies(duongDanFileProxy)
+	danhSachProxy, err := uc.BoDoc.ReadProxies(duongDanFileProxy)
 	if err != nil {
-		uc.boGhiNhatKy.Errorf("Không đọc được danh sách proxy: %v", err)
+		uc.BoGhiNhatKy.Errorf("Không đọc được danh sách proxy: %v", err)
 		return nil, err
 	}
 
-	uc.nhomXuLy.BatDau()
+	uc.NhomXuLy.BatDau()
 	ketQua := make([]model.KetQuaProxy, 0, len(danhSachProxy))
 	kenhKetQuaProxy := make(chan model.KetQuaProxy, len(danhSachProxy))
 
@@ -85,13 +94,13 @@ func (uc *KiemTraProxy) ThucThi(duongDanFileProxy string) ([]model.KetQuaProxy, 
 			MaTacVu: fmt.Sprintf("%s://%s:%s", p.GiaoDien, p.DiaChi, p.Cong),
 			DuLieu:  p.GiaoDien,
 		}
-		uc.nhomXuLy.NopTacVu(tacVu)
+		uc.NhomXuLy.NopTacVu(tacVu)
 
 		go func(proxy model.Proxy) {
-			ketQuaTacVu := <-uc.nhomXuLy.KetQua()
+			ketQuaTacVu := <-uc.NhomXuLy.KetQua()
 			ketQuaDon := model.KetQuaProxy{Proxy: proxy, TrangThai: ketQuaTacVu.TrangThai, LoiXayRa: ketQuaTacVu.LoiXayRa}
 			if ketQuaTacVu.TrangThai == "Thành công" {
-				if diaChi, _, err := uc.boKiemTra.CheckProxy(proxy, uc.duongDanKiemTra); err == nil {
+				if diaChi, _, err := uc.BoKiemTra.CheckProxy(proxy, uc.DuongDanKiemTra); err == nil {
 					ketQuaDon.DiaChi = diaChi
 				} else {
 					ketQuaDon.DiaChi = "Lấy IP thất bại"
@@ -107,12 +116,12 @@ func (uc *KiemTraProxy) ThucThi(duongDanFileProxy string) ([]model.KetQuaProxy, 
 		ketQua = append(ketQua, <-kenhKetQuaProxy)
 	}
 
-	uc.nhomXuLy.Dung()
+	uc.NhomXuLy.Dung()
 
 	duongDanFileKetQua := utils.AutoPath("output/ket_qua_proxy.txt")
 	tep, err := os.Create(duongDanFileKetQua)
 	if err != nil {
-		uc.boGhiNhatKy.Errorf("Không tạo được file kết quả: %v", err)
+		uc.BoGhiNhatKy.Errorf("Không tạo được file kết quả: %v", err)
 		return ketQua, err
 	}
 	defer tep.Close()
@@ -126,6 +135,6 @@ func (uc *KiemTraProxy) ThucThi(duongDanFileProxy string) ([]model.KetQuaProxy, 
 			r.Proxy.GiaoDien, r.Proxy.DiaChi, r.Proxy.Cong, r.DiaChi, trangThai)
 	}
 
-	uc.boGhiNhatKy.Infof("Kết quả đã được lưu vào %s", duongDanFileKetQua)
+	uc.BoGhiNhatKy.Infof("Kết quả đã được lưu vào %s", duongDanFileKetQua)
 	return ketQua, nil
 }

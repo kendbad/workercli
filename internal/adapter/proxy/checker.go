@@ -15,8 +15,9 @@ type BoKiemTra interface {
 // BoKiemTraProxy là bộ điều hợp (adapter) để kiểm tra các proxy.
 // Đóng vai trò trung gian giữa usecase và implementation cụ thể
 type BoKiemTraProxy struct {
-	boGhiNhatKy *utils.Logger // boGhiNhatKy: bộ ghi nhật ký
-	boKiemTra   BoKiemTra     // boKiemTra: bộ kiểm tra - triển khai cụ thể (ví dụ: bộ kiểm tra IP)
+	boGhiNhatKy   *utils.Logger // boGhiNhatKy: bộ ghi nhật ký
+	boKiemTra     BoKiemTra     // boKiemTra: bộ kiểm tra - triển khai cụ thể (ví dụ: bộ kiểm tra IP)
+	BoKiemTraMock BoKiemTra     // Mock object dùng cho việc testing
 }
 
 // TaoBoKiemTraProxy tạo một bộ điều hợp (adapter) mới để kiểm tra proxy.
@@ -31,6 +32,11 @@ func TaoBoKiemTraProxy(boGhiNhatKy *utils.Logger, boKiemTra BoKiemTra) *BoKiemTr
 // CheckProxy kiểm tra một proxy để xác định địa chỉ IP thực được sử dụng.
 // Phương thức này ủy quyền kiểm tra cho triển khai cụ thể (boKiemTra)
 func (c *BoKiemTraProxy) CheckProxy(proxy model.Proxy, duongDanKiemTra string) (diaChi string, trangThai string, err error) {
+	// Nếu có mock object, sử dụng nó trong test
+	if c.BoKiemTraMock != nil {
+		return c.BoKiemTraMock.KiemTraProxy(proxy, duongDanKiemTra)
+	}
+
 	diaChi, trangThai, err = c.boKiemTra.KiemTraProxy(proxy, duongDanKiemTra)
 	if err != nil {
 		c.boGhiNhatKy.Errorf("Kiểm tra proxy thất bại %s://%s:%s: %v", proxy.GiaoDien, proxy.DiaChi, proxy.Cong, err)

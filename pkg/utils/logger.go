@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -120,4 +121,12 @@ func CreateLogFile() (*os.File, error) {
 	}
 
 	return logFile, nil
+}
+
+// NewTestLogger tạo một logger đơn giản cho mục đích testing
+func NewTestLogger() *Logger {
+	logger := logrus.New()
+	logger.SetLevel(logrus.InfoLevel)
+	logger.SetOutput(io.Discard) // Không ghi log ra khi testing
+	return &Logger{logger}
 }
